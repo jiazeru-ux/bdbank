@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+  <title>工位管理系统 Pro</title>
+  
+  <!-- === 核心新增：引入 Supabase 的 JS 驱动库 === -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* === 原有 V37 Pro 的全套绝美 UI 样式 === */
+    :root { --primary-blue: #0072ff; --success-green: #0abf53; --warning-yellow: #ff9f43; --danger-red: #ee5253; --bg-gray: #f4f7f9; --text-dark: #2d3436; --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); --hover-shadow: 0 8px 18px rgba(0, 0, 0, 0.12); }
+    html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg-gray); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--text-dark); }
+    body { padding: 20px; padding-bottom: 80px; box-sizing: border-box;}
+    .header { background: white; padding: 15px 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: var(--card-shadow); display: flex; justify-content: space-between; align-items: center; }
+    .header h3 { margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px;}
+    .btn { padding: 8px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; color: white; font-size: 14px; transition: 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .btn:active { transform: scale(0.98); }
+    .btn-blue { background: var(--primary-blue); } .btn-blue:hover { background: #005ecb; }
+    .btn-red { background: var(--danger-red); } .btn-gray { background: #dfe6e9; color: var(--text-dark); box-shadow: none;}
+    .room-box { margin-bottom: 30px; }
+    .room-title { font-weight: 700; font-size: 16px; margin-bottom: 15px; color: var(--text-dark); padding-left: 10px; border-left: 4px solid var(--primary-blue); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+    .seat { background: white; border-radius: 12px; cursor: pointer; position: relative; overflow: hidden; box-shadow: var(--card-shadow); transition: 0.3s; border: 1px solid transparent; display: flex; flex-direction: column; }
+    .seat:hover { box-shadow: var(--hover-shadow); transform: translateY(-2px); }
+    .status-bar { height: 6px; width: 100%; }
+    .seat.occ .status-bar { background: var(--danger-red); }
+    .seat.temp .status-bar { background: var(--warning-yellow); }
+    .seat.free .status-bar { background: var(--success-green); }
+    .seat-content { padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .s-main { text-align: center; margin-bottom: 10px; }
+    .s-id { font-size: 12px; color: #999; display: block; margin-bottom: 4px; font-weight: 600;}
+    .s-name { font-size: 16px; font-weight: 700; }
+    .seat.free .s-name { color: var(--success-green); font-weight: normal; }
+    .s-footer { text-align: center; }
+    .s-co { font-size: 12px; color: #636e72; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px;}
+    .s-badges { display: flex; justify-content: center; gap: 4px; font-size: 14px; height: 20px;}
+    .badge-icon { opacity: 0.2; filter: grayscale(1); transition: 0.2s;}
+    .badge-icon.active { opacity: 1; filter: grayscale(0); }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(2px);}
+    .modal-box { background: white; padding: 25px; width: 90%; max-width: 480px; border-radius: 16px; max-height: 85vh; overflow-y: auto; box-shadow: var(--hover-shadow); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;}
+    #m_title { margin: 0; font-size: 20px; font-weight: 800; }
+    .temp-status-card { background: #fff8e1; color: #d35400; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; font-weight: 600; border: 1px solid #ffe0b2; }
+    .sec-title { font-size: 13px; font-weight: 700; color: #636e72; margin: 20px 0 10px 0; text-transform: uppercase; }
+    input[type="text"], select, input[list] { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #dfe6e9; border-radius: 8px; box-sizing: border-box; background: #fdfdfd; font-size: 15px; outline: none; }
+    input:focus { border-color: var(--primary-blue); background: white; box-shadow: 0 0 0 3px rgba(0, 114, 255, 0.1); }
+    .todo-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f1f1; font-size: 15px; font-weight: 500;}
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+    input:checked + .slider { background-color: var(--primary-blue); }
+    input:checked + .slider:before { transform: translateX(20px); }
+    .asset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .asset-item { background: #f8f9fa; padding: 8px; border-radius: 8px; border: 1px solid #eee;}
+    .asset-label { font-size: 12px; color:#636e72; margin-bottom: 4px; display:block; font-weight: 600;}
+    .asset-item input { margin-bottom: 0; padding: 8px; font-size: 13px; border:none; background: transparent; border-bottom: 1px dashed #ccc; border-radius: 0;}
+    .modal-footer { display: flex; gap: 10px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee;}
+    .modal-footer button { flex: 1; padding: 12px; }
+    #ip_warn { background: #ffeaea; color: var(--danger-red); padding: 8px 12px; border-radius: 6px; font-size: 13px; display: flex; align-items: center; gap: 5px;}
+    .toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px 20px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 15px; box-shadow: 0 6px 16px rgba(0,0,0,0.2); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
+    .toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+    <h3>
+        <span style="font-size: 22px;">🛡️</span>
+        <div style="display:flex; flex-direction: column;">
+            <span>工位管理系统</span>
+            <span style="font-size:12px; color:#999; font-weight:normal;">V37 Pro Edition - <span style="color:var(--success-green)">Powered by Supabase</span></span>
+        </div>
+    </h3>
+    <button class="btn btn-blue" onclick="init()">🔄 刷新数据</button>
+</div>
+
+<div id="app" style="text-align:center; padding:80px 20px; color:#999; font-size: 18px;">
+    <div style="font-size: 40px; margin-bottom: 20px;">🤔</div>正在加载云端数据...
+</div>
+
+<div id="toast">✅ 保存成功</div>
+
+<div id="modal" class="modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="m_title"></h3>
+            <div class="temp-status-card">
+                <label class="switch" style="margin-right: 10px;">
+                    <input type="checkbox" id="c_temp">
+                    <span class="slider"></span>
+                </label>
+                <span>临时离场状态</span>
+            </div>
+        </div>
+
+        <div class="sec-title">👤 基本信息</div>
+        <input type="text" id="i_name" placeholder="姓名 (必填)">
+        <input list="co_list" id="i_co" placeholder="所属公司/部门 (必填)">
+        <datalist id="co_list"></datalist>
+
+        <div class="sec-title">🌐 网络与权限</div>
+        <div id="div_ip_input" style="display:none"><input type="text" id="i_cloud_text" placeholder="IP地址" onblur="checkIpConflict(this.value)"></div>
+        <div id="div_ip_select" style="display:none">
+            <select id="i_cloud_sel" style="margin-bottom: 5px;"></select>
+            <div style="font-size:12px;color:#666; margin-bottom: 10px;">当前 IP: <span id="cur_ip_display" style="font-weight:bold; color:var(--primary-blue)"></span></div>
+        </div>
+        <div id="ip_warn" style="display:none; margin-bottom:12px;">⚠️ 冲突！该 IP 已被占用</div>
+        
+        <div class="todo-row"><span>🔑 门禁权限</span><input type="text" id="i_door" placeholder="输入卡号" style="width: 120px; margin:0; padding: 8px;"></div>
+        <div class="todo-row"><span>💳 实体工牌</span><input type="text" id="i_badge" placeholder="工牌号" style="width: 120px; margin:0; padding: 8px;"></div>
+        <div class="todo-row"><span>💬 钉钉群</span><label class="switch"><input type="checkbox" id="c_ding"><span class="slider"></span></label></div>
+        <div class="todo-row"><span>🐧 RTX通訊</span><label class="switch"><input type="checkbox" id="c_rtx"><span class="slider"></span></label></div>
+        <div class="todo-row"><span>🔒 保密协议</span><label class="switch"><input type="checkbox" id="c_nda"><span class="slider"></span></label></div>
+
+        <div class="sec-title">💻 硬件资产登记</div>
+        <div class="asset-grid">
+            <div class="asset-item"><span class="asset-label">⌨️ 键鼠套件</span><input id="a_kb"></div>
+            <div class="asset-item"><span class="asset-label">🖥️ 显示器</span><input id="a_mon"></div>
+            <div class="asset-item"><span class="asset-label">☁️ 云终端盒</span><input id="a_box"></div>
+            <div class="asset-item"><span class="asset-label">📟 金融终端</span><input id="a_term"></div>
+            <div class="asset-item"><span class="asset-label">🖨️ 打印机</span><input id="a_print"></div>
+            <div class="asset-item"><span class="asset-label">📷 高拍仪</span><input id="a_cam"></div>
+            <div class="asset-item"><span class="asset-label">🔒 柜内清</span><input id="a_cin"></div>
+            <div class="asset-item"><span class="asset-label">🔓 柜外清</span><input id="a_cout"></div>
+        </div>
+
+        <div class="sec-title">📝 备注</div>
+        <input type="text" id="i_remark" placeholder="备注..." style="margin-top:0;">
+
+        <div class="modal-footer">
+            <button class="btn btn-red" onclick="doLeave()" style="flex: 0 0 auto; width: auto; padding-left: 15px; padding-right: 15px;">🗑️ 离场</button>
+            <button class="btn btn-gray" onclick="closeModal()">取消</button>
+            <button id="btn_save" class="btn btn-blue" style="flex: 2;" onclick="save()">✨ 保存信息</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==========================================
+// API 密钥配置区
+// ==========================================
+const SUPABASE_URL = 'https://ycdlkvdursrhjsjtfwim.supabase.co'; 
+const SUPABASE_KEY = 'sb_publishable_EqKbgkgdxQox4Be2Kpr5kg_gY3taem8';
+// ==========================================
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let globalData = [], freeIps = [], cachedCompanies = [];
+let editIdx = -1;
+
+async function init() {
+    if(globalData.length === 0) {
+        document.getElementById('app').innerHTML = '<div style="font-size: 40px; margin-bottom: 20px;">🤔</div>正在加载云端数据...';
+    }
+    
+    try {
+        const [wsRes, ipRes] = await Promise.all([
+            supabaseClient.from('workstations').select('*').order('id', { ascending: true }),
+            supabaseClient.from('ips').select('*')
+        ]);
+
+        if (wsRes.error) throw wsRes.error;
+        if (ipRes.error) throw ipRes.error;
+
+        cachedCompanies = [...new Set(wsRes.data.map(d => d.company).filter(Boolean))];
+        freeIps = ipRes.data.filter(i => !i.status || i.status.trim() === '').map(i => i.ip);
+
+        globalData = wsRes.data.map((row, index) => ({
+            rowIndex: index,
+            id: row.id,
+            name: row.name || '',
+            office: row.office || '未分配',
+            company: row.company || '',
+            cloudIp: row.cloud_ip || '',
+            door: row.door || '',
+            ding: row.ding || '',
+            rtx: row.rtx || '',
+            nda: row.nda || '',
+            badge: row.badge || '',
+            assets: row.assets || { keyboard:'', monitor:'', cloudBox:'', terminal:'', cin:'', cout:'', printer:'', camera:'' },
+            remark: row.remark || '',
+            isTemp: row.is_temp || false
+        }));
+
+        render();
+    } catch (err) {
+        alert("获取数据失败：" + err.message);
+        document.getElementById('app').innerHTML = `<div style="color:var(--danger-red);">❌ 连接数据库失败，请检查网络或控制台报错。<br>${err.message}</div>`;
+    }
+}
+
+window.onload = init;
+
+function render() {
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+    const dl = document.getElementById('co_list');
+    dl.innerHTML = '';
+    cachedCompanies.forEach(c => dl.innerHTML += `<option value="${c}">`);
+
+    const groups = {};
+    globalData.forEach(d => {
+        const off = d.office || "未分配区域";
+        if(!groups[off]) groups[off] = [];
+        groups[off].push(d);
+    });
+
+    Object.keys(groups).sort().forEach(off => {
+        let html = `<div class="room-box"><div class="room-title">${off} <span style="font-weight:normal; font-size:13px; color:#999; margin-left:5px;">(${groups[off].length}个工位)</span></div><div class="grid">`;
+        groups[off].forEach(d => {
+            const idx = globalData.indexOf(d);
+            const isOcc = d.name && d.name!=='';
+            const cls = isOcc ? (d.isTemp ? 'temp' : 'occ') : 'free';
+            
+            let badges = '';
+            if(isOcc) {
+                badges += `<span class="badge-icon ${d.door ? 'active' : ''}" title="门禁">🔑</span>`;
+                badges += `<span class="badge-icon ${d.cloudIp ? 'active' : ''}" title="IP">🌐</span>`;
+                badges += `<span class="badge-icon ${d.ding.includes('√') ? 'active' : ''}" title="钉钉">💬</span>`;
+                badges += `<span class="badge-icon ${d.rtx.includes('√') ? 'active' : ''}" title="RTX">🐧</span>`;
+            }
+
+            html += `
+            <div class="seat ${cls}" onclick="openEdit(${idx})">
+                <div class="status-bar"></div>
+                <div class="seat-content">
+                    <div class="s-main">
+                        <span class="s-id">${d.id}</span>
+                        <span class="s-name">${isOcc ? d.name : '空闲中'}</span>
+                    </div>
+                    <div class="s-footer">
+                        <span class="s-co">${isOcc ? (d.company || '暂无公司') : '-'}</span>
+                        <div class="s-badges">${badges}</div>
+                    </div>
+                </div>
+            </div>`;
+        });
+        html += `</div></div>`;
+        app.innerHTML += html;
+    });
+}
+
+function openEdit(idx) {
+    editIdx = idx;
+    const d = globalData[idx];
+    const btn = document.getElementById('btn_save');
+    btn.disabled = false; btn.innerHTML = "✨ 保存信息";
+
+    document.getElementById('m_title').innerText = d.id + " 工位详情";
+    document.getElementById('i_name').value = d.name;
+    document.getElementById('i_co').value = d.company;
+    document.getElementById('c_temp').checked = d.isTemp;
+    document.getElementById('ip_warn').style.display = 'none';
+    
+    document.getElementById('i_door').value = d.door;
+    document.getElementById('i_badge').value = d.badge;
+    document.getElementById('i_remark').value = d.remark;
+    document.getElementById('c_ding').checked = d.ding.includes('√');
+    document.getElementById('c_rtx').checked = d.rtx.includes('√');
+    document.getElementById('c_nda').checked = d.nda.includes('√');
+
+    document.getElementById('a_kb').value = d.assets.keyboard || '';
+    document.getElementById('a_mon').value = d.assets.monitor || '';
+    document.getElementById('a_box').value = d.assets.cloudBox || '';
+    document.getElementById('a_term').value = d.assets.terminal || '';
+    document.getElementById('a_print').value = d.assets.printer || '';
+    document.getElementById('a_cam').value = d.assets.camera || '';
+    document.getElementById('a_cin').value = d.assets.cin || '';
+    document.getElementById('a_cout').value = d.assets.cout || '';
+
+    const is5A03 = (d.office || "").indexOf('5A03') > -1;
+    if(is5A03) {
+        document.getElementById('div_ip_input').style.display = 'block';
+        document.getElementById('div_ip_select').style.display = 'none';
+        document.getElementById('i_cloud_text').value = d.cloudIp;
+    } else {
+        document.getElementById('div_ip_input').style.display = 'none';
+        document.getElementById('div_ip_select').style.display = 'block';
+        const sel = document.getElementById('i_cloud_sel');
+        sel.innerHTML = '<option value="">-- 保持不变 --</option>';
+        document.getElementById('cur_ip_display').innerText = d.cloudIp || '暂无';
+        if(d.cloudIp) sel.innerHTML += `<option value="${d.cloudIp}" selected>✅ ${d.cloudIp} (当前持有)</option>`;
+        freeIps.forEach(ip => sel.innerHTML += `<option value="${ip}">🟢 ${ip}</option>`);
+    }
+    document.getElementById('modal').style.display = 'flex';
+}
+
+function checkIpConflict(ip) {
+    if(!ip) return;
+    const currentId = globalData[editIdx].id;
+    const conflict = globalData.find(p => p.cloudIp === ip && p.id !== currentId);
+    const warnEl = document.getElementById('ip_warn');
+    if(conflict) {
+        warnEl.innerText = `⚠️ 冲突！该 IP 已被 【${conflict.name}】 在 [${conflict.office}] 占用`;
+        warnEl.style.display = 'block';
+    } else {
+        warnEl.style.display = 'none';
+    }
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg || "✅ 保存成功";
+    t.classList.add('show');
+    setTimeout(() => { t.classList.remove('show'); }, 3000);
+}
+
+async function save() {
+    const btn = document.getElementById('btn_save');
+    const nameVal = document.getElementById('i_name').value.trim();
+    const coVal = document.getElementById('i_co').value.trim();
+    if(!nameVal || !coVal) { alert("请填写完整的姓名和公司信息"); return; }
+
+    const currentId = globalData[editIdx].id;
+    const duplicate = globalData.find(p => p.name === nameVal && p.id !== currentId);
+    if(duplicate) {
+        if(!confirm(`👯‍♂️ 提醒：【${nameVal}】在【${duplicate.office}】已有工位。
+确定是同一个人吗？`)) return;
+    }
+
+    btn.disabled = true; btn.innerHTML = "⏳ 正在保存...";
+    const d = globalData[editIdx];
+
+    const updatePayload = {
+        name: nameVal,
+        company: coVal,
+        is_temp: document.getElementById('c_temp').checked,
+        door: document.getElementById('i_door').value,
+        badge: document.getElementById('i_badge').value,
+        remark: document.getElementById('i_remark').value,
+        ding: document.getElementById('c_ding').checked ? '√' : '',
+        rtx: document.getElementById('c_rtx').checked ? '√' : '',
+        nda: document.getElementById('c_nda').checked ? '√' : '',
+        assets: {
+            keyboard: document.getElementById('a_kb').value,
+            monitor: document.getElementById('a_mon').value,
+            cloudBox: document.getElementById('a_box').value,
+            terminal: document.getElementById('a_term').value,
+            printer: document.getElementById('a_print').value,
+            camera: document.getElementById('a_cam').value,
+            cin: document.getElementById('a_cin').value,
+            cout: document.getElementById('a_cout').value
+        }
+    };
+
+    const is5A03 = (d.office || "").indexOf('5A03') > -1;
+    let newIp = is5A03 ? document.getElementById('i_cloud_text').value : document.getElementById('i_cloud_sel').value;
+    if(newIp !== "") updatePayload.cloud_ip = newIp;
+
+    try {
+        const { error } = await supabaseClient.from('workstations').update(updatePayload).eq('id', currentId);
+        if (error) throw error;
+        
+        document.getElementById('modal').style.display = 'none';
+        showToast("✅ 保存成功");
+        init();
+    } catch(err) {
+        alert("❌ 保存出错：" + err.message);
+    } finally {
+        btn.disabled = false; btn.innerHTML = "✨ 保存信息";
+    }
+}
+
+async function doLeave() {
+    const d = globalData[editIdx];
+    if(!d.name) { alert("当前工位已经是空闲状态"); return; }
+    if(!confirm(`⚠️ 高危操作
+
+确定要为【${d.name}】办理彻底离场吗？`)) return;
+    
+    const emptyPayload = {
+        name: "", company: "", cloud_ip: "", is_temp: false,
+        door: "", ding: "", rtx: "", nda: "", badge: "", remark: "",
+        assets: { keyboard:'', monitor:'', cloudBox:'', terminal:'', cin:'', cout:'', printer:'', camera:'' }
+    };
+    
+    try {
+        const { error } = await supabaseClient.from('workstations').update(emptyPayload).eq('id', d.id);
+        if (error) throw error;
+        
+        document.getElementById('modal').style.display = 'none';
+        showToast("🗑️ 已办理离场");
+        init();
+    } catch(err) {
+        alert("❌ 离场操作失败：" + err.message);
+    }
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+</script>
+</body>
+</html>
