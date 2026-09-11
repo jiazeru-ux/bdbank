@@ -44,6 +44,9 @@
     #m_title { margin: 0; font-size: 20px; font-weight: 800; }
     .temp-status-card { background: #fff8e1; color: #d35400; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; font-weight: 600; border: 1px solid #ffe0b2; }
     .sec-title { font-size: 13px; font-weight: 700; color: #636e72; margin: 20px 0 10px 0; text-transform: uppercase; }
+    .field-label { display: block; margin: 0 0 6px 2px; color: #636e72; font-size: 12px; font-weight: 700; }
+    .name-preview { margin: 0 0 12px; padding: 10px 12px; background: #f8f9fa; border: 1px dashed #b2bec3; border-radius: 8px; color: #636e72; font-size: 13px; line-height: 1.5; word-break: break-all; }
+    .name-preview strong { color: var(--primary-blue); }
     input[type="text"], select, input[list] { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #dfe6e9; border-radius: 8px; box-sizing: border-box; background: #fdfdfd; font-size: 15px; outline: none; }
     input:focus { border-color: var(--primary-blue); background: white; box-shadow: 0 0 0 3px rgba(0, 114, 255, 0.1); }
     .todo-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f1f1; font-size: 15px; font-weight: 500;}
@@ -96,8 +99,15 @@
             </div>
         </div>
 
-        <div class="sec-title">👤 基本信息</div>
-        <input type="text" id="i_name" placeholder="姓名 (必填)">
+        <div class="sec-title">👤 工位分配信息</div>
+        <label class="field-label" for="i_occupant">工位占用人</label>
+        <input type="text" id="i_occupant" placeholder="例如：杨宝奇" oninput="updateNamePreview()">
+        <label class="field-label" for="i_allocator">工位分配人</label>
+        <input type="text" id="i_allocator" placeholder="例如：薛沛然" oninput="updateNamePreview()">
+        <label class="field-label" for="i_departure">预计离场时间</label>
+        <input type="text" id="i_departure" list="departure_options" placeholder="例如：长期 或 2026-09-30" oninput="updateNamePreview()">
+        <datalist id="departure_options"><option value="长期"></datalist>
+        <div class="name-preview">保存格式：<strong id="name_preview">占用人-分配人-离场时间</strong></div>
         <input list="co_list" id="i_co" placeholder="所属公司/部门 (必填)">
         <datalist id="co_list"></datalist>
 
@@ -243,6 +253,29 @@ function render() {
     });
 }
 
+function parseAllocationName(value) {
+    const text = (value || '').trim();
+    if(!text) return { occupant: '', allocator: '', departure: '' };
+
+    // 兼容“占用人-分配人-离场时间”，同时保留原来只有姓名的旧数据。
+    const match = text.match(/^(.+?)\s*[-—–]\s*(.+?)\s*[-—–]\s*(.+)$/);
+    if(!match) return { occupant: text, allocator: '', departure: '' };
+
+    return {
+        occupant: match[1].trim(),
+        allocator: match[2].trim(),
+        departure: match[3].trim()
+    };
+}
+
+function updateNamePreview() {
+    const occupant = document.getElementById('i_occupant').value.trim();
+    const allocator = document.getElementById('i_allocator').value.trim();
+    const departure = document.getElementById('i_departure').value.trim();
+    document.getElementById('name_preview').innerText =
+        [occupant || '占用人', allocator || '分配人', departure || '离场时间'].join('-');
+}
+
 function openEdit(idx) {
     editIdx = idx;
     const d = globalData[idx];
@@ -250,7 +283,11 @@ function openEdit(idx) {
     btn.disabled = false; btn.innerHTML = "✨ 保存信息";
 
     document.getElementById('m_title').innerText = d.id + " 工位详情";
-    document.getElementById('i_name').value = d.name;
+    const allocation = parseAllocationName(d.name);
+    document.getElementById('i_occupant').value = allocation.occupant;
+    document.getElementById('i_allocator').value = allocation.allocator;
+    document.getElementById('i_departure').value = allocation.departure || (d.name ? '' : '长期');
+    updateNamePreview();
     document.getElementById('i_co').value = d.company;
     document.getElementById('c_temp').checked = d.isTemp;
     document.getElementById('ip_warn').style.display = 'none';
@@ -310,14 +347,22 @@ function showToast(msg) {
 
 async function save() {
     const btn = document.getElementById('btn_save');
-    const nameVal = document.getElementById('i_name').value.trim();
+    const occupantVal = document.getElementById('i_occupant').value.trim();
+    const allocatorVal = document.getElementById('i_allocator').value.trim();
+    const departureVal = document.getElementById('i_departure').value.trim();
+    const nameVal = `${occupantVal}-${allocatorVal}-${departureVal}`;
     const coVal = document.getElementById('i_co').value.trim();
-    if(!nameVal || !coVal) { alert("请填写完整的姓名和公司信息"); return; }
+    if(!occupantVal || !allocatorVal || !departureVal || !coVal) {
+        alert("请填写完整的占用人、分配人、离场时间和公司信息");
+        return;
+    }
 
     const currentId = globalData[editIdx].id;
-    const duplicate = globalData.find(p => p.name === nameVal && p.id !== currentId);
+    const duplicate = globalData.find(p =>
+        parseAllocationName(p.name).occupant === occupantVal && p.id !== currentId
+    );
     if(duplicate) {
-        if(!confirm(`👯‍♂️ 提醒：【${nameVal}】在【${duplicate.office}】已有工位。
+        if(!confirm(`👯‍♂️ 提醒：【${occupantVal}】在【${duplicate.office}】已有工位。
 确定是同一个人吗？`)) return;
     }
 
