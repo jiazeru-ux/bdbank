@@ -100,17 +100,13 @@
         </div>
 
         <div class="sec-title">👤 工位分配信息</div>
-        <label class="field-label" for="i_occupant">工位占用人 <span style="color:var(--danger-red)">*</span></label>
-        <input type="text" id="i_occupant" placeholder="例如：杨宝奇" oninput="updateNamePreview()" required>
-        <label class="field-label" for="i_allocator">工位分配人 <span style="color:var(--danger-red)">*</span></label>
-        <select id="i_allocator" onchange="updateNamePreview()" required>
-            <option value="">请选择工位分配人</option>
-            <option value="贾泽儒">贾泽儒</option>
-            <option value="薛沛然">薛沛然</option>
-            <option value="孟巧玲">孟巧玲</option>
-        </select>
-        <label class="field-label" for="i_departure">预计离场时间 <span style="color:var(--danger-red)">*</span></label>
-        <input type="text" id="i_departure" placeholder="手动填写：长期 或 2026-09-30" oninput="updateNamePreview()" required>
+        <label class="field-label" for="i_occupant">工位占用人</label>
+        <input type="text" id="i_occupant" placeholder="例如：杨宝奇" oninput="updateNamePreview()">
+        <label class="field-label" for="i_allocator">工位分配人</label>
+        <input type="text" id="i_allocator" placeholder="例如：薛沛然" oninput="updateNamePreview()">
+        <label class="field-label" for="i_departure">预计离场时间</label>
+        <input type="text" id="i_departure" list="departure_options" placeholder="例如：长期 或 2026-09-30" oninput="updateNamePreview()">
+        <datalist id="departure_options"><option value="长期"></datalist>
         <div class="name-preview">保存格式：<strong id="name_preview">占用人-分配人-离场时间</strong></div>
         <input list="co_list" id="i_co" placeholder="所属公司/部门 (必填)">
         <datalist id="co_list"></datalist>
