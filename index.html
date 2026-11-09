@@ -107,9 +107,10 @@
         <label class="field-label" for="i_allocator">工位分配人 <span style="color:var(--danger-red)">*</span></label>
         <select id="i_allocator" onchange="updateNamePreview()" required>
             <option value="">请选择工位分配人</option>
-            <option value="贾泽儒">贾泽儒</option>
             <option value="薛沛然">薛沛然</option>
             <option value="孟巧玲">孟巧玲</option>
+            <option value="李月">李月</option>
+            <option value="史素慧">史素慧</option>
         </select>
         <label class="field-label" for="i_departure">预计离场时间 <span style="color:var(--danger-red)">*</span></label>
         <input type="text" id="i_departure" placeholder="手动填写：长期 或 2026-09-30" oninput="updateNamePreview()" required>
@@ -264,8 +265,8 @@ function parseAllocationName(value) {
     const text = (value || '').trim();
     if(!text) return { occupant: '', manager: '', allocator: '', departure: '' };
 
-    // 新格式第三段是固定的分配人；离场日期中的连字符保留在第四段。
-    const current = text.match(/^(.+?)\s*[-—–]\s*(.+?)\s*[-—–]\s*(贾泽儒|薛沛然|孟巧玲)\s*[-—–]\s*(.+)$/);
+    // 兼容当前及历史分配人（贾泽儒仅用于识别旧数据）；离场日期中的连字符保留在第四段。
+    const current = text.match(/^(.+?)\s*[-—–]\s*(.+?)\s*[-—–]\s*(薛沛然|孟巧玲|李月|史素慧|贾泽儒)\s*[-—–]\s*(.+)$/);
     if(current) return {
         occupant: current[1].trim(),
         manager: current[2].trim(),
@@ -304,7 +305,15 @@ function openEdit(idx) {
     const allocation = parseAllocationName(d.name);
     document.getElementById('i_occupant').value = allocation.occupant;
     document.getElementById('i_manager').value = allocation.manager;
-    document.getElementById('i_allocator').value = allocation.allocator;
+    const allocatorSelect = document.getElementById('i_allocator');
+    // 旧记录中的分配人可以继续查看/保存，但不出现在新工位的可选名单里。
+    allocatorSelect.querySelectorAll('option[data-legacy="true"]').forEach(option => option.remove());
+    if (allocation.allocator && !Array.from(allocatorSelect.options).some(option => option.value === allocation.allocator)) {
+        const oldOption = new Option(allocation.allocator + '（历史分配人）', allocation.allocator);
+        oldOption.dataset.legacy = 'true';
+        allocatorSelect.add(oldOption);
+    }
+    allocatorSelect.value = allocation.allocator;
     document.getElementById('i_departure').value = allocation.departure || (d.name ? '' : '长期');
     updateNamePreview();
     document.getElementById('i_co').value = d.company;
@@ -458,4 +467,3 @@ function closeModal() { document.getElementById('modal').style.display = 'none';
 </script>
 </body>
 </html>
-
