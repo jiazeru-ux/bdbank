@@ -3,7 +3,7 @@
 <head>
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
-  <title>工位管理系统 Pro</title>
+  <title>工位资源管理 · Workspace OS V40</title>
   
   <!-- === 核心新增：引入 Supabase 的 JS 驱动库 === -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,7 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
-    /* === 原有 V37 Pro 的全套绝美 UI 样式 === */
+    /* V40 Premium：工作台、矩阵与卡片视觉升级 */
     :root { --primary-blue: #0072ff; --success-green: #0abf53; --warning-yellow: #ff9f43; --danger-red: #ee5253; --bg-gray: #f4f7f9; --text-dark: #2d3436; --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); --hover-shadow: 0 8px 18px rgba(0, 0, 0, 0.12); }
     html, body { margin: 0; padding: 0; min-height: 100vh; background: var(--bg-gray); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--text-dark); }
     body { padding: 20px; padding-bottom: 80px; box-sizing: border-box;}
@@ -21,25 +21,71 @@
     .btn:active { transform: scale(0.98); }
     .btn-blue { background: var(--primary-blue); } .btn-blue:hover { background: #005ecb; }
     .btn-red { background: var(--danger-red); } .btn-gray { background: #dfe6e9; color: var(--text-dark); box-shadow: none;}
+    /* V39 轻量企业工作台风格：工位卡片 + 紧凑列表 */
     .room-box { margin-bottom: 30px; }
-    .room-title { font-weight: 700; font-size: 16px; margin-bottom: 15px; color: var(--text-dark); padding-left: 10px; border-left: 4px solid var(--primary-blue); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
-    .seat { background: white; border-radius: 12px; cursor: pointer; position: relative; overflow: hidden; box-shadow: var(--card-shadow); transition: 0.3s; border: 1px solid transparent; display: flex; flex-direction: column; }
-    .seat:hover { box-shadow: var(--hover-shadow); transform: translateY(-2px); }
-    .status-bar { height: 6px; width: 100%; }
-    .seat.occ .status-bar { background: var(--danger-red); }
-    .seat.temp .status-bar { background: var(--warning-yellow); }
-    .seat.free .status-bar { background: var(--success-green); }
-    .seat-content { padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-    .s-main { text-align: center; margin-bottom: 10px; }
-    .s-id { font-size: 12px; color: #999; display: block; margin-bottom: 4px; font-weight: 600;}
-    .s-name { font-size: 16px; font-weight: 700; }
-    .seat.free .s-name { color: var(--success-green); font-weight: normal; }
-    .s-footer { text-align: center; }
-    .s-co { font-size: 12px; color: #636e72; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px;}
-    .s-badges { display: flex; justify-content: center; gap: 4px; font-size: 14px; height: 20px;}
-    .badge-icon { opacity: 0.2; filter: grayscale(1); transition: 0.2s;}
-    .badge-icon.active { opacity: 1; filter: grayscale(0); }
+    .room-title { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; padding: 0 2px; }
+    .room-heading { display: inline-flex; align-items: center; gap: 9px; min-width: 0; }
+    .room-marker { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; background: #eaf2ff; color: #2167cc; font-size: 16px; border-radius: 10px; }
+    .room-name { font-size: 17px; font-weight: 760; color: #26364d; word-break: break-word; }
+    .room-count { color: #8a98a9; font-weight: 600; font-size: 12px; }
+    .room-summary { color: #718099; font-size: 12px; background: #eaf0f6; padding: 7px 11px; border-radius: 8px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 272px), 1fr)); gap: 14px; }
+    .seat { --seat-accent: #e06573; background: #fff; border-radius: 16px; cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 3px 14px rgba(31, 57, 95, .048); transition: transform .18s, box-shadow .18s, border-color .18s; border: 1px solid #e3eaf2; padding: 17px 17px 14px; display: flex; flex-direction: column; min-width: 0; }
+    .seat.occ { --seat-accent: #e36a75; }
+    .seat.temp { --seat-accent: #e9a44a; }
+    .seat.free { --seat-accent: #22aa7a; background: #fcfffe; }
+    .seat::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 4px; background: var(--seat-accent); opacity: .9; }
+    .seat:hover { box-shadow: 0 11px 24px rgba(31,57,95,.115); transform: translateY(-2px); border-color: #d1ddea; }
+    .seat:focus-visible, .seat-table tr:focus-visible { outline: 3px solid rgba(0,114,255,.42); outline-offset: 2px; }
+    .seat-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
+    .seat-id { min-width: 0; color: #506781; font-weight: 750; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    .seat-id .id-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .seat-id-icon { background: #eef3fa; border-radius: 7px; padding: 5px 6px; font-size: 13px; }
+    .seat-state { flex: none; font-size: 11px; border-radius: 999px; font-weight: 700; padding: 5px 9px; white-space: nowrap; }
+    .occ .seat-state, .state-occ { color: #b74455; background: #fff0f2; }
+    .temp .seat-state, .state-temp { color: #ab6a16; background: #fff3df; }
+    .free .seat-state, .state-free { color: #16825c; background: #e8f8f0; }
+    .seat-person { display: flex; align-items: center; gap: 11px; min-width: 0; margin-bottom: 9px; }
+    .seat-avatar { width: 43px; height: 43px; flex: none; display: grid; place-items: center; background: #eaf1ff; color: #3970c8; border-radius: 13px; font-size: 18px; font-weight: 750; }
+    .free .seat-avatar { background: #e9f7f0; color: #26a176; }
+    .temp .seat-avatar { background: #fff1db; color: #bc842e; }
+    .seat-person-text { min-width: 0; flex: 1; }
+    .seat-name { font-size: 19px; font-weight: 800; letter-spacing: .1px; color: #23334b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .free .seat-name { color: #298565; }
+    .seat-company { font-size: 12px; color: #8390a1; line-height: 1.65; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .seat-details { border-top: 1px dashed #e6ebf2; margin-top: 10px; padding-top: 13px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 10px; }
+    .detail-block { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .detail-label { font-size: 11px; color: #9aa5b3; }
+    .detail-value { color: #485a70; font-size: 13px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .detail-block.wide { grid-column: span 2; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
+    .detail-block.wide .detail-value { text-align: right; }
+    .seat-empty-details { border-top: 1px dashed #dfece5; margin-top: 10px; padding: 21px 0 18px; color: #8da199; font-size: 13px; text-align: center; }
+    .seat-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px solid #f0f3f6; min-width: 0; }
+    .seat-flags { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; min-width: 0; }
+    .seat-mini-tag { color: #71829a; background: #f3f6fa; font-size: 10px; border-radius: 6px; padding: 4px 6px; white-space: nowrap; }
+    .seat-mini-tag.asset { background: #e9f2ff; color: #4774b4; }
+    .seat-more { color: #7290b5; background: #f2f6fb; font-size: 17px; line-height: 1; width: 25px; height: 25px; border-radius: 8px; display: grid; place-items: center; flex: none; }
+    .results-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 2px 16px; flex-wrap: wrap; }
+    .results-top .result-note { margin: 0; }
+    .view-toggle { display: inline-flex; align-items: center; gap: 3px; padding: 3px; border-radius: 10px; background: #e7edf5; }
+    .view-btn { border: 0; border-radius: 8px; background: transparent; color: #78889c; font-size: 12px; font-weight: 700; padding: 7px 12px; cursor: pointer; transition: .15s; }
+    .view-btn.active { background: white; color: #1769cc; box-shadow: 0 2px 6px rgba(31,57,95,.1); }
+    .view-btn:focus-visible { outline: 2px solid #4c98fa; outline-offset: 1px; }
+    .table-wrap { border: 1px solid #e4eaf1; border-radius: 14px; background: #fff; overflow-x: auto; box-shadow: 0 3px 14px rgba(31,57,95,.048); }
+    .seat-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; min-width: 850px; }
+    .seat-table th { background: #f6f9fd; color: #79889b; font-size: 12px; font-weight: 700; padding: 13px 12px; white-space: nowrap; }
+    .seat-table td { border-top: 1px solid #eef1f6; padding: 13px 12px; color: #54657b; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .seat-table tr[role='button'] { cursor: pointer; }
+    .seat-table tbody tr:hover { background: #f7faff; }
+    .seat-table .table-main { color: #26374e; font-weight: 750; }
+    .seat-table .seat-state { display: inline-block; }
+    .table-more { color: #2776d0; font-weight: 750; }
+    .loading-placeholder { text-align: center; padding: 65px 20px; color: #8b99ab; font-size: 16px; }
+    @media (max-width: 580px) {
+      .grid { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+      .seat { padding: 16px; }
+      .room-summary { font-size: 11px; }
+    }
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(2px);}
     .modal-box { background: white; padding: 25px; width: 90%; max-width: 480px; border-radius: 16px; max-height: 85vh; overflow-y: auto; box-shadow: var(--hover-shadow); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;}
@@ -66,7 +112,7 @@
     .modal-footer button { flex: 1; padding: 12px; }
     .toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px 20px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 15px; box-shadow: 0 6px 16px rgba(0,0,0,0.2); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
     .toast.show { visibility: visible; opacity: 1; bottom: 50px; }
-    /* V38: 统计、搜索、分配人筛选、导出 */
+    /* V39: 保留 V38 统计、搜索、分配人筛选、导出 */
     .header-actions { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
     .dashboard { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
     .stat-card { background: #fff; border-radius: 12px; padding: 18px 19px; box-shadow: var(--card-shadow); border-top: 4px solid #dfe6e9; }
@@ -94,53 +140,294 @@
       .toolbar { padding: 12px; }
       .toolbar-field { flex: 1 1 100%; }
     }
+
+/* ============================================================
+   V40 PREMIUM · 简洁的深海蓝企业运营驾驶舱
+   纯外观升级，保留 V39 数据表结构、保存和离场动作。
+   ============================================================ */
+:root {
+  --primary-blue:#2459e8; --success-green:#079d78; --warning-yellow:#d9922e;
+  --danger-red:#e16772; --bg-gray:#f3f6fb; --text-dark:#1a2c46;
+  --card-shadow:0 8px 26px rgba(25,51,95,.055); --hover-shadow:0 18px 40px rgba(25,51,95,.13);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{max-width:1680px;margin:0 auto;padding:24px clamp(16px,3.6vw,54px) 90px;background:radial-gradient(ellipse at 75% 2%,#e6edfa 0%,transparent 35%),#f3f6fb;color:#1a2c46;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;line-height:1.5}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hero{position:relative;overflow:hidden;min-height:314px;background:linear-gradient(119deg,#0b1a39 0%,#102a57 53%,#174687 100%);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:0 34px;box-shadow:0 20px 52px rgba(18,54,106,.16);isolation:isolate}
+.hero::after{content:"";position:absolute;width:520px;height:520px;right:10%;top:-290px;border-radius:100%;background:radial-gradient(circle,rgba(84,168,255,.22),transparent 67%);pointer-events:none;z-index:-1}
+.hero::before{content:"";position:absolute;right:-30px;bottom:-135px;width:460px;height:340px;border:1px solid rgba(148,206,255,.14);border-radius:50%;transform:rotate(-25deg);pointer-events:none}
+.hero-watermark{position:absolute;top:-138px;right:35px;font-size:420px;line-height:1;font-family:Arial,sans-serif;font-weight:900;color:rgba(134,190,255,.035);user-select:none;pointer-events:none;z-index:-1}
+.hero-topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 0;border-bottom:1px solid rgba(220,236,255,.12)}
+.brand-identity,.hero-top-right{display:flex;align-items:center;gap:12px}
+.brand-symbol{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;background:linear-gradient(140deg,rgba(89,157,255,.35),rgba(112,191,255,.08));border:1px solid rgba(182,219,255,.3);color:#cfecff}
+.brand-words{display:flex;flex-direction:column;gap:1px}
+.brand-words strong{font-size:12px;font-weight:800;letter-spacing:2px}
+.brand-words small{font-size:10px;color:#afc4e0;letter-spacing:1px}
+.live-chip{display:flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid rgba(150,201,255,.18);background:rgba(255,255,255,.055);border-radius:20px;color:#c9ddf5;font-size:11px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#efb34d;box-shadow:0 0 10px rgba(239,179,77,.4)}
+.live-chip.connected .live-dot{background:#59dfae;box-shadow:0 0 11px rgba(89,223,174,.5)}
+.live-chip.failed .live-dot{background:#ff7f87}
+.version-chip{font-size:10px;letter-spacing:1.1px;color:#9bbbe3;border-left:1px solid rgba(210,230,255,.25);padding-left:13px;white-space:nowrap}
+.version-chip b{color:#fff;margin-left:3px;font-weight:700}
+.hero-body{padding:30px 0 29px;display:flex;align-items:center;justify-content:space-between;gap:30px}
+.hero-copy{min-width:0;flex:1}
+.eyebrow{display:flex;align-items:center;gap:9px;letter-spacing:2.25px;color:#9ebee5;font-size:10px;font-weight:700}
+.eyebrow-line{display:inline-block;width:18px;height:1px;background:#71b3ff}
+.hero h1{font-size:clamp(30px,3vw,44px);font-weight:800;letter-spacing:-1px;line-height:1.27;margin:12px 0 12px;color:#fff}
+.hero h1 span{color:#96ccff}
+.hero-copy p{font-size:13px;color:#aec4de;margin:0 0 24px;line-height:1.7}
+.header-actions{display:flex;align-items:center;justify-content:flex-start;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:700;border-radius:10px;min-height:39px;padding:10px 17px;box-shadow:none;transition:transform .18s,background .18s,border-color .18s,box-shadow .18s}
+.btn:hover{transform:translateY(-1px)}.btn:focus-visible{outline:3px solid rgba(80,154,249,.42);outline-offset:2px}
+.btn-hero-primary{background:#f0f6ff;color:#153b72;border:1px solid #f0f6ff;box-shadow:0 8px 20px rgba(0,0,0,.1)}
+.btn-hero-primary:hover{background:white}
+.btn-hero-outline{background:rgba(255,255,255,.07);color:#dcecff;border:1px solid rgba(216,235,255,.24)}
+.btn-hero-outline:hover{background:rgba(255,255,255,.14)}
+.hero-insight{width:320px;flex:none;background:rgba(255,255,255,.07);border:1px solid rgba(202,226,255,.16);border-radius:17px;padding:18px 21px;backdrop-filter:blur(4px)}
+.insight-head{display:flex;gap:7px;align-items:center;font-size:10px;letter-spacing:1.5px;color:#b4cfeb;font-weight:750;white-space:nowrap}
+.insight-spark{width:5px;height:5px;background:#8dd3ff;border-radius:50%}
+.insight-meta{font-size:10px;color:#8caed3;font-weight:400;letter-spacing:0;margin-left:auto}
+.insight-content{display:flex;gap:19px;align-items:center;margin-top:16px}
+.util-ring{--percent:0;width:128px;height:128px;flex:none;border-radius:50%;background:conic-gradient(#8ccbff calc(var(--percent)*1%),rgba(189,218,255,.13) 0);padding:11px;display:grid;place-items:center;box-shadow:0 0 0 1px rgba(255,255,255,.07)}
+.util-ring-inner{width:100%;height:100%;border-radius:50%;background:#15325c;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.util-ring-inner strong{font-size:27px;letter-spacing:-1px;color:white;line-height:1.15}
+.util-ring-inner small{font-size:10px;color:#adc6e6;margin-top:3px}
+.insight-stats{min-width:0;flex:1}
+.insight-label,.insight-legend,.insight-updated{display:block;font-size:10px;color:#acc8e7}
+.insight-value{font-weight:850;font-size:30px;color:white;white-space:nowrap;line-height:1.5}
+.insight-value span{font-size:14px;color:#7fa8d5}
+.insight-legend{white-space:nowrap}.insight-legend i{display:inline-block;width:6px;height:6px;background:#7dbbf5;border-radius:50%;margin-right:4px}
+.insight-updated{font-size:9px;color:#80a2c7;margin-top:12px}
+.hero-bottomline{display:flex;justify-content:space-between;padding:11px 0;border-top:1px solid rgba(220,236,255,.11);font-size:9px;letter-spacing:1.5px;color:#6f93c3}
+.overview{margin-top:31px}.workspace-panel{margin-top:27px}
+.section-label{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:0 2px 16px}
+.section-serial{display:block;font-size:10px;letter-spacing:1.4px;font-weight:750;color:#7891b2;margin-bottom:2px}
+.section-label h2{font-size:22px;line-height:1.2;letter-spacing:-.5px;margin:0;font-weight:820;color:#1b2e4c}
+.section-aside{font-size:12px;color:#93a1b6;padding-bottom:3px}
+.dashboard{gap:15px;margin:0;grid-template-columns:repeat(4,minmax(0,1fr))}
+.stat-card{position:relative;overflow:hidden;border:1px solid #e6ecf4!important;border-radius:16px;padding:19px 20px 16px;box-shadow:0 5px 24px rgba(34,68,118,.045);background:#fff;min-width:0;transition:transform .2s,box-shadow .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 12px 27px rgba(34,68,118,.085)}
+.stat-card::after{content:"";position:absolute;width:96px;height:96px;right:-38px;bottom:-48px;border-radius:50%;background:var(--stat-pale);opacity:.65}
+.stat-total{--stat-color:#3266e8;--stat-pale:#e4ecff}
+.stat-occupied{--stat-color:#d45d75;--stat-pale:#fff0f4}
+.stat-free{--stat-color:#0da581;--stat-pale:#dcfbf1}
+.stat-temp{--stat-color:#d7902e;--stat-pale:#fff4df}
+.stat-header{display:flex;justify-content:space-between;align-items:center}
+.stat-card .stat-label{color:#7486a0;font-size:13px;font-weight:650;margin:0}
+.stat-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;color:var(--stat-color);background:var(--stat-pale);font-size:17px;font-weight:700}
+.stat-line{display:flex;align-items:baseline;gap:7px;margin:14px 0 8px}
+.stat-card .stat-number{font-size:34px;letter-spacing:-1.5px;line-height:1.04;font-weight:830;color:#1a2c46}
+.stat-line small{font-size:11px;color:#a3afbe}
+.stat-foot{font-weight:700;letter-spacing:1.2px;font-size:9px;color:var(--stat-color)}
+.toolbar{margin:0 0 17px;padding:15px 17px;gap:15px;background:#fff;box-shadow:0 5px 24px rgba(34,68,118,.045);border:1px solid #e6ecf4;border-radius:15px;align-items:end}
+.toolbar-field{min-width:180px;flex:1}
+.toolbar-field.search-field{flex:2 1 340px}
+.toolbar-field label{color:#506580;font-weight:700;font-size:11px;letter-spacing:.2px;margin:0 0 7px}
+.search-wrap{position:relative}.search-wrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none;color:#91a2b6}
+.toolbar .search-wrap input{padding-left:42px}
+.toolbar-field input,.toolbar-field select{height:42px;border:1px solid #e3e9f3;background:#f7f9fd;border-radius:9px;padding:10px 13px;margin:0;font-size:12px;color:#38516f;outline:none}
+.toolbar-field input:focus,.toolbar-field select:focus{border-color:#85b1f9;background:#fff;box-shadow:0 0 0 3px rgba(58,116,229,.1)}
+.toolbar .btn-clear{height:42px;min-height:42px;background:#ecf2fa;color:#567394;border:1px solid #e5edf6;font-size:12px;padding:10px 14px}
+.toolbar .btn-clear:hover{background:#e5eefb}
+.results-top{margin:0 2px 18px;align-items:center}
+.result-note{font-size:12px;color:#8091a8;font-weight:600}
+.view-toggle{border:1px solid #e6eaf3;background:#e9eff7;border-radius:11px;padding:3px;gap:2px}
+.view-btn{padding:8px 13px;font-size:11px;border-radius:8px;color:#758aa6;white-space:nowrap}
+.view-btn.active{color:#2156bd;background:#fff;box-shadow:0 2px 9px rgba(29,65,119,.10)}
+.view-btn span{font-size:14px;vertical-align:-1px;margin-right:4px}
+.room-box{margin-bottom:32px}
+.room-title{padding:0 2px;margin-bottom:13px;gap:16px}
+.room-heading{gap:10px}
+.room-marker{width:35px;height:35px;background:#e0eaff;color:#3c6fca;border-radius:10px;font-size:18px}
+.room-name{font-size:16px;font-weight:800;color:#203451}
+.room-count{color:#879ab3;font-size:11px}
+.room-summary{display:flex;align-items:center;gap:11px;background:#eef3fa;color:#7187a3;border-radius:8px;padding:8px 11px;font-size:11px;font-weight:600}
+.room-progress{display:inline-block;width:70px;height:5px;border-radius:20px;overflow:hidden;background:#d7e1ef}
+.room-progress-fill{display:block;height:100%;background:linear-gradient(90deg,#4c8ef1,#3266e8);border-radius:20px}
+.grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,296px),1fr));gap:16px}
+.seat{--seat-accent:#507bdb;--seat-pale:#e8efff;--seat-tint:#fafdff;min-height:270px;padding:18px 19px 15px;border-radius:17px;background:#fff!important;border:1px solid #e3eaf4;box-shadow:0 6px 23px rgba(29,58,110,.05);transition:border-color .22s,transform .22s,box-shadow .22s}
+.seat.occ{--seat-accent:#e16476;--seat-pale:#fff1f4;--seat-tint:#fffcfd}
+.seat.temp{--seat-accent:#d99136;--seat-pale:#fff4e5;--seat-tint:#fffefa}
+.seat.free{--seat-accent:#10a27b;--seat-pale:#e8f8f2;--seat-tint:#fcfffd}
+.seat::before{height:3px;width:100%;bottom:auto;background:linear-gradient(90deg,var(--seat-accent),transparent 85%);opacity:.8}
+.seat:hover{transform:translateY(-4px);border-color:#c7d6ec;box-shadow:0 20px 40px rgba(32,61,116,.12)}
+.seat:focus-visible{outline:3px solid #85b2fa;outline-offset:2px}
+.seat-top{margin-bottom:17px;align-items:flex-start}
+.seat-id{font-size:18px;color:#294262;gap:0;display:flex;flex-direction:column;align-items:flex-start;line-height:1.45;letter-spacing:-.2px}
+.seat-id-kicker{font-size:9px;letter-spacing:1.55px;color:#a0adbd;font-weight:750}
+.seat-id .id-value{font-size:17px;max-width:215px;font-weight:800}
+.seat-state{font-size:10px;padding:6px 10px 6px 9px;display:inline-flex;align-items:center;gap:6px;border-radius:99px;font-weight:750}
+.seat-state-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.occ .seat-state,.state-occ{color:#ca5065;background:#fff0f3}
+.temp .seat-state,.state-temp{color:#b47c25;background:#fff4e2}
+.free .seat-state,.state-free{color:#128965;background:#e6f8f0}
+.seat-person{gap:12px;margin-bottom:11px}
+.seat-avatar{width:45px;height:45px;border-radius:13px;background:linear-gradient(135deg,var(--seat-pale),#f7faff);color:var(--seat-accent);border:1px solid rgba(38,86,160,.05);font-size:19px}
+.free .seat-avatar{background:#e8f8f2}.temp .seat-avatar{background:#fff4e2}
+.seat-name{font-size:18px;font-weight:850;color:#1c304a;letter-spacing:.1px}
+.free .seat-name{color:#209573}
+.seat-company{font-size:11px;margin-top:4px;color:#8998ab}
+.seat-details{border-top:1px solid #edf1f7;margin:8px 0 0;padding:12px 0 10px;gap:12px 9px}
+.detail-label{font-size:10px;letter-spacing:.1px;color:#a0adbb}
+.detail-value{font-size:12px;color:#435a78;font-weight:750}
+.detail-block.wide{border-top:1px dashed #edf1f7;padding-top:10px;margin-top:0}
+.detail-block.wide .detail-value{color:#405a7b}
+.seat-empty-details{display:flex;align-items:center;justify-content:center;margin-top:6px;padding:35px 0 26px;color:#99afa6;font-size:12px;border-top:1px dashed #deede6}
+.seat-bottom{border-top:1px solid #eef2f7;padding-top:12px;gap:10px}
+.seat-mini-tag{padding:5px 7px;border:1px solid #e6edf5;border-radius:7px;background:#f7f9fc;color:#7790a8;font-size:10px}
+.seat-mini-tag.asset{background:#edf5ff;border-color:#e4effd;color:#477ab4}
+.seat-more{width:28px;height:28px;background:#edf3fc;color:#456eaf;border-radius:8px;font-size:15px}
+/* 数字矩阵视图：在较大工位量下更容易一眼发现空位 */
+.matrix-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:10px}
+.matrix-seat{--matrix-accent:#dc6779;--matrix-pale:#fff1f4;background:white;border:1px solid #e4eaf3;border-radius:12px;padding:13px 12px 12px;position:relative;min-width:0;min-height:106px;display:flex;flex-direction:column;align-items:flex-start;gap:5px;cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s}
+.matrix-seat.free{--matrix-accent:#14a27e;--matrix-pale:#e9f9f3}
+.matrix-seat.temp{--matrix-accent:#d99538;--matrix-pale:#fff4e4}
+.matrix-seat:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(30,55,101,.09);border-color:#bfcfe6}
+.matrix-seat:focus-visible{outline:3px solid #8cb9fc;outline-offset:2px}
+.matrix-top{display:flex;align-items:center;justify-content:space-between;gap:5px;width:100%;font-size:10px;color:#8293aa;font-weight:750}
+.matrix-led{width:8px;height:8px;border-radius:50%;background:var(--matrix-accent);box-shadow:0 0 0 4px var(--matrix-pale)}
+.matrix-name{font-size:14px;font-weight:800;color:#30465e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.matrix-seat.free .matrix-name{color:#239676}
+.matrix-small{font-size:10px;color:#96a4b5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.matrix-seat::after{content:"";position:absolute;bottom:0;left:12px;right:12px;height:2px;background:var(--matrix-accent);opacity:.65;border-radius:8px}
+.table-wrap{border:1px solid #e1e9f4;border-radius:15px;box-shadow:0 5px 20px rgba(29,58,110,.045)}
+.seat-table{font-size:12px}.seat-table th{background:#f4f8fd;color:#7789a0;font-size:11px;letter-spacing:.2px;padding:15px}.seat-table td{padding:15px;color:#59718d}.seat-table tbody tr:hover{background:#f3f8ff}.seat-table .table-main{color:#2c4361}
+.no-results{border:1px solid #e2e9f4;padding:55px;border-radius:16px;box-shadow:0 5px 20px rgba(29,58,110,.045)}
+/* 信息编辑面板统一换肤 */
+.modal{backdrop-filter:blur(7px);background:rgba(10,27,50,.61)}
+.modal-box{width:min(94%,540px);max-width:540px;max-height:89vh;background:white;border-radius:20px;padding:25px 27px;box-shadow:0 30px 80px rgba(5,25,56,.35)}
+.modal-header{padding:0 0 13px;border-bottom:1px solid #e7edf6;gap:12px}
+#m_title{font-size:21px;letter-spacing:-.4px;color:#1e3352}
+.temp-status-card{margin:0;font-size:11px;padding:8px 10px;flex:none;border-radius:9px;background:#fff6e8;border-color:#f4e3c6;color:#af7424}
+.sec-title{margin:20px 0 12px;font-size:11px;color:#4c6b96;letter-spacing:1px;font-weight:850}
+.field-label{font-size:11px;color:#61738c}
+.modal-box input[type=text],.modal-box select,.modal-box input[list]{border:1px solid #e3eaf5;background:#f8faff;border-radius:9px;font-size:13px;padding:11px;margin-bottom:11px}
+.modal-box input:focus{border-color:#7baaf8;background:white;box-shadow:0 0 0 3px rgba(37,93,232,.1)}
+.name-preview{border:1px dashed #d7e3f4;background:#f3f7ff;color:#8195ae;font-size:11px}
+.name-preview strong{color:#2459e8}
+.todo-row{border-bottom:1px solid #ecf1f7;font-size:13px;color:#506783}
+.asset-grid{gap:10px}.asset-item{background:#f7f9fd;border:1px solid #e9eef6;padding:10px;border-radius:10px}.asset-label{color:#8090a6;font-size:10px}
+.asset-item input{font-size:12px}
+.modal-footer{border-top:1px solid #e8eef5;padding-top:17px;margin-top:21px}
+.modal-footer .btn{min-height:43px;font-size:12px}
+.btn-blue{background:linear-gradient(110deg,#2357d8,#3b80ed);color:white}.btn-blue:hover{background:#1f5bcc}
+.btn-gray{background:#eef2f8;color:#61758f}.btn-gray:hover{background:#e2eaf5}
+.btn-red{background:#fff0f3;color:#c84e66;border:1px solid #ffdfe5;box-shadow:none}.btn-red:hover{background:#ffe4e9}
+.toast{background:#193252;color:#fff;border-radius:12px;padding:12px 20px}
+@media(max-width:1120px){.hero-insight{width:285px;padding:16px}.util-ring{width:113px;height:113px}.insight-content{gap:12px}.insight-value{font-size:26px}.grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,268px),1fr))}}
+@media(max-width:780px){body{padding:12px 12px 65px}.hero{padding:0 22px;border-radius:19px}.hero-body{align-items:flex-start}.hero-insight{width:245px}.insight-head{letter-spacing:.5px}.insight-meta{display:none}.insight-content{flex-direction:column;align-items:center}.insight-stats{text-align:center}.insight-updated{margin-top:6px}.hero h1{font-size:31px}.section-label h2{font-size:20px}.dashboard{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat-card{padding:16px}.toolbar-field{flex:1 1 45%}.toolbar-field.search-field{flex:1 1 100%}}
+@media(max-width:580px){.hero{padding:0 18px;border-radius:17px}.hero-topbar{padding:13px 0}.hero-top-right{gap:7px}.version-chip{display:none}.live-chip{font-size:10px}.hero-body{flex-direction:column;gap:22px;padding:24px 0 21px}.hero h1{font-size:29px;margin:11px 0}.hero-copy p{font-size:12px;margin:0 0 18px}.eyebrow{font-size:9px;letter-spacing:1.4px}.hero-insight{width:100%;padding:12px 16px}.insight-content{flex-direction:row;justify-content:center;gap:24px;margin-top:9px}.util-ring{width:90px;height:90px;padding:8px}.util-ring-inner strong{font-size:20px}.insight-stats{text-align:left}.insight-value{font-size:26px}.hero-bottomline{font-size:8px}.overview{margin-top:25px}.workspace-panel{margin-top:25px}.section-aside{display:none}.stat-card{padding:14px}.stat-card .stat-number{font-size:29px}.stat-icon{width:27px;height:27px}.stat-foot{font-size:8px;letter-spacing:.55px}.toolbar{padding:12px;gap:9px}.toolbar-field.search-field,.toolbar-field.allocator-field{flex:1 1 100%}.toolbar .btn-clear{width:100%}.results-top{align-items:flex-start;flex-direction:column;gap:11px}.view-toggle{width:100%;display:flex}.view-btn{flex:1;padding:9px 4px;font-size:11px}.room-title{align-items:flex-start}.room-summary{font-size:10px;padding:6px}.room-progress{width:35px}.grid{grid-template-columns:1fr;gap:11px}.seat{min-height:260px}.matrix-wrap{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.modal-box{padding:20px 17px}.modal-header{flex-direction:column;align-items:flex-start}.modal-footer{flex-wrap:wrap}.modal-footer .btn{flex:1 1 45%}.modal-footer .btn-blue{flex:1 1 100%}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
   </style>
 </head>
 <body>
 
-<div class="header">
-    <h3>
-        <span style="font-size: 22px;">🛡️</span>
-        <div style="display:flex; flex-direction: column;">
-            <span>工位管理系统</span>
-            <span style="font-size:12px; color:#999; font-weight:normal;">V38 Pro Edition - <span style="color:var(--success-green)">Powered by Supabase</span></span>
-        </div>
-    </h3>
-    <div class="header-actions">
-      <button class="btn btn-green" onclick="exportExcel()">📊 导出Excel台账</button>
-      <button class="btn btn-blue" onclick="init()">🔄 刷新数据</button>
+<header class="hero">
+  <div class="hero-watermark" aria-hidden="true">W</div>
+  <div class="hero-topbar">
+    <div class="brand-identity">
+      <span class="brand-symbol" aria-hidden="true">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7m-3.5-3.5v7"/></svg>
+      </span>
+      <span class="brand-words"><strong>WORKSPACE OS</strong><small>工位资源管理平台</small></span>
     </div>
-</div>
-
-<div class="dashboard" aria-label="工位使用统计">
-  <div class="stat-card stat-total"><span class="stat-label">🏢 总工位</span><strong class="stat-number" id="stat_total">0</strong></div>
-  <div class="stat-card stat-occupied"><span class="stat-label">👤 已占用</span><strong class="stat-number" id="stat_occupied">0</strong></div>
-  <div class="stat-card stat-free"><span class="stat-label">🟢 空闲工位</span><strong class="stat-number" id="stat_free">0</strong></div>
-  <div class="stat-card stat-temp"><span class="stat-label">🟠 临时离场</span><strong class="stat-number" id="stat_temp">0</strong></div>
-</div>
-
-<div class="toolbar">
-  <div class="toolbar-field search-field">
-    <label for="global_search">🔎 全局搜索</label>
-    <input type="text" id="global_search" placeholder="输入姓名、公司、工位编号（也支持区域）" oninput="render()" autocomplete="off">
+    <div class="hero-top-right">
+      <span class="live-chip" id="sync_chip"><span class="live-dot"></span><span id="sync_status">正在连接云端</span></span>
+      <span class="version-chip">V40 <b>PREMIUM</b></span>
+    </div>
   </div>
-  <div class="toolbar-field">
-    <label for="allocator_filter">👥 按工位分配人筛选</label>
-    <select id="allocator_filter" onchange="render()">
-      <option value="">全部分配人（含历史记录）</option>
-      <option value="薛沛然">薛沛然</option>
-      <option value="孟巧玲">孟巧玲</option>
-      <option value="李月">李月</option>
-      <option value="史素慧">史素慧</option>
-    </select>
+  <div class="hero-body">
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="eyebrow-line"></span> DIGITAL WORKSPACE · OPERATIONS CENTER</div>
+      <h1>每一席工位，<br><span>尽在掌握。</span></h1>
+      <p>人员 · 工位 · 资产，一站式高效管理。让每一次调配都有据可查。</p>
+      <div class="header-actions">
+        <button type="button" class="btn btn-hero-primary" onclick="exportExcel()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M5 17v3h14v-3"/></svg> 导出 Excel 台账
+        </button>
+        <button type="button" class="btn btn-hero-outline" onclick="init()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.6-4.3L3 9m0-5v5h5"/><path d="M4 13a8 8 0 0 0 14.6 4.3L21 15m-5 0h5v5"/></svg> 刷新数据
+        </button>
+      </div>
+    </div>
+    <div class="hero-insight">
+      <div class="insight-head"><span class="insight-spark"></span> SPACE UTILIZATION <span class="insight-meta">当前数据概览</span></div>
+      <div class="insight-content">
+        <div class="util-ring" id="util_ring" style="--percent:0">
+          <div class="util-ring-inner"><strong id="stat_rate">0%</strong><small>工位使用率</small></div>
+        </div>
+        <div class="insight-stats">
+          <span class="insight-label">当前已分配工位</span>
+          <div class="insight-value" id="stat_ratio">0 <span>/ 0</span></div>
+          <div class="insight-legend"><i></i> 占用工位（含临时离场）</div>
+          <div class="insight-updated" id="last_updated">等待数据载入</div>
+        </div>
+      </div>
+    </div>
   </div>
-  <button class="btn btn-gray" onclick="clearFilters()">清空筛选</button>
-</div>
-<div class="result-note" id="result_note">当前显示 0 个工位</div>
+  <div class="hero-bottomline"><span>WORKSPACE MANAGEMENT</span><span>SPACE · PEOPLE · ASSETS</span></div>
+</header>
 
-<div id="app" style="text-align:center; padding:80px 20px; color:#999; font-size: 18px;">
-    <div style="font-size: 40px; margin-bottom: 20px;">🤔</div>正在加载云端数据...
-</div>
+<section class="overview" aria-label="工位使用统计">
+  <div class="section-label"><div><span class="section-serial">01 / OVERVIEW</span><h2>数据总览</h2></div><span class="section-aside">当前已加载数据统计</span></div>
+  <div class="dashboard">
+    <div class="stat-card stat-total">
+      <div class="stat-header"><span class="stat-label">工位总数</span><span class="stat-icon">▦</span></div>
+      <div class="stat-line"><strong class="stat-number" id="stat_total">0</strong><small>个工位</small></div>
+      <span class="stat-foot">TOTAL CAPACITY</span>
+    </div>
+    <div class="stat-card stat-occupied">
+      <div class="stat-header"><span class="stat-label">已占用</span><span class="stat-icon">◉</span></div>
+      <div class="stat-line"><strong class="stat-number" id="stat_occupied">0</strong><small>个工位</small></div>
+      <span class="stat-foot">IN USE · 含临时离场</span>
+    </div>
+    <div class="stat-card stat-free">
+      <div class="stat-header"><span class="stat-label">空闲可用</span><span class="stat-icon">✧</span></div>
+      <div class="stat-line"><strong class="stat-number" id="stat_free">0</strong><small>个工位</small></div>
+      <span class="stat-foot">AVAILABLE NOW</span>
+    </div>
+    <div class="stat-card stat-temp">
+      <div class="stat-header"><span class="stat-label">临时离场</span><span class="stat-icon">◷</span></div>
+      <div class="stat-line"><strong class="stat-number" id="stat_temp">0</strong><small>个工位</small></div>
+      <span class="stat-foot">TEMPORARILY AWAY</span>
+    </div>
+  </div>
+</section>
+
+<section class="workspace-panel" aria-label="工位浏览和筛选">
+  <div class="section-label"><div><span class="section-serial">02 / WORKSPACE</span><h2>工位全景</h2></div><span class="section-aside">按区域浏览 · 点击任意工位编辑</span></div>
+  <div class="toolbar">
+    <div class="toolbar-field search-field">
+      <label for="global_search">快速检索</label>
+      <div class="search-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      <input type="text" id="global_search" placeholder="搜索姓名、公司、工位编号或区域" oninput="render()" autocomplete="off"></div>
+    </div>
+    <div class="toolbar-field allocator-field">
+      <label for="allocator_filter">工位分配人</label>
+      <select id="allocator_filter" onchange="render()">
+        <option value="">全部分配人（含历史）</option>
+        <option value="薛沛然">薛沛然</option>
+        <option value="孟巧玲">孟巧玲</option>
+        <option value="李月">李月</option>
+        <option value="史素慧">史素慧</option>
+      </select>
+    </div>
+    <button type="button" class="btn btn-clear" onclick="clearFilters()">清除筛选 ↗</button>
+  </div>
+  <div class="results-top">
+    <div class="result-note" id="result_note">正在载入工位...</div>
+    <div class="view-toggle" role="group" aria-label="工位展示方式">
+      <button type="button" id="view_cards" class="view-btn active" aria-pressed="true" onclick="setViewMode('cards')"><span aria-hidden="true">▦</span> 精选卡片</button>
+      <button type="button" id="view_matrix" class="view-btn" aria-pressed="false" onclick="setViewMode('matrix')"><span aria-hidden="true">▥</span> 工位矩阵</button>
+      <button type="button" id="view_table" class="view-btn" aria-pressed="false" onclick="setViewMode('table')"><span aria-hidden="true">☷</span> 数据列表</button>
+    </div>
+  </div>
+</section>
+
+<div id="app"><div class="loading-placeholder">☁️ 正在加载云端工位数据...</div></div>
 
 <div id="toast" class="toast">✅ 保存成功</div>
 
@@ -219,10 +506,11 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let globalData = [], cachedCompanies = [];
 let editIdx = -1;
+let viewMode = 'cards'; // 只切换展示方式，不影响工位数据、筛选和导出
 
 async function init() {
     if(globalData.length === 0) {
-        document.getElementById('app').innerHTML = '<div style="font-size: 40px; margin-bottom: 20px;">🤔</div>正在加载云端数据...';
+        document.getElementById('app').innerHTML = '<div class="loading-placeholder">☁️ 正在加载云端工位数据...</div>';
     }
 
     try {
@@ -248,7 +536,16 @@ async function init() {
             isTemp: row.is_temp || false
         }));
         render();
+        const syncChip = document.getElementById('sync_chip');
+        syncChip.classList.add('connected');
+        syncChip.classList.remove('failed');
+        document.getElementById('sync_status').textContent = '云端数据已同步';
+        document.getElementById('last_updated').textContent = '最近刷新：' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
     } catch(err) {
+        const syncChip = document.getElementById('sync_chip');
+        syncChip.classList.remove('connected');
+        syncChip.classList.add('failed');
+        document.getElementById('sync_status').textContent = '云端连接异常';
         alert('获取数据失败：' + err.message);
         document.getElementById('app').textContent = '❌ 连接数据库失败：' + err.message;
     }
@@ -279,6 +576,108 @@ function getFilteredData() {
     });
 }
 
+function setViewMode(nextMode) {
+    viewMode = ['cards', 'table', 'matrix'].includes(nextMode) ? nextMode : 'cards';
+    ['cards', 'matrix', 'table'].forEach(mode => {
+        const button = document.getElementById('view_' + mode);
+        button.classList.toggle('active', viewMode === mode);
+        button.setAttribute('aria-pressed', String(viewMode === mode));
+    });
+    render();
+}
+
+// 只读取现有的 assets JSON，不会修改任何设备信息。
+function getAssetCount(d) {
+    const assets = d.assets || {};
+    const keys = ['keyboard', 'monitor', 'cloudBox', 'terminal', 'printer', 'camera', 'cin', 'cout'];
+    return keys.filter(key => String(assets[key] ?? '').trim()).length;
+}
+
+function getSeatInfo(d) {
+    const occupied = isOccupied(d);
+    const allocation = parseAllocationName(d.name);
+    return {
+        occupied,
+        allocation,
+        kind: !occupied ? 'free' : d.isTemp ? 'temp' : 'occ',
+        status: !occupied ? '空闲' : d.isTemp ? '临时离场' : '使用中',
+        person: occupied ? (allocation.occupant || d.name) : '等待分配',
+        assetsCount: getAssetCount(d)
+    };
+}
+
+function renderSeatCard(d) {
+    const idx = globalData.indexOf(d);
+    const info = getSeatInfo(d);
+    const avatar = info.occupied ? (Array.from(info.person)[0] || '人') : '＋';
+    const manager = info.allocation.manager || '未填写';
+    const allocator = info.allocation.allocator || '未填写';
+    const departure = info.allocation.departure || '未填写';
+    const flags = [];
+    if (info.occupied && d.door) flags.push('门禁');
+    if (info.occupied && d.ding.includes('√')) flags.push('钉钉');
+    if (info.occupied && d.rtx.includes('√')) flags.push('RTX');
+    const flagHtml = flags.map(text => `<span class="seat-mini-tag">${text}</span>`).join('');
+    const assetHtml = info.assetsCount ? `<span class="seat-mini-tag asset" title="已登记设备类别数">▣ ${info.assetsCount}类设备</span>` : '';
+    const middle = info.occupied ? `
+        <div class="seat-details">
+          <div class="detail-block"><span class="detail-label">技术经理 / MANAGER</span><span class="detail-value" title="${escapeHtml(manager)}">${escapeHtml(manager)}</span></div>
+          <div class="detail-block"><span class="detail-label">工位分配 / OWNER</span><span class="detail-value" title="${escapeHtml(allocator)}">${escapeHtml(allocator)}</span></div>
+          <div class="detail-block wide"><span class="detail-label">预计离场</span><span class="detail-value" title="${escapeHtml(departure)}">${escapeHtml(departure)}</span></div>
+        </div>` : `<div class="seat-empty-details">＋ 点击安排人员 · 工位可用</div>`;
+    return `
+      <div class="seat ${info.kind}" onclick="openEdit(${idx})" role="button" tabindex="0" aria-label="${escapeHtml(d.id)}工位，${info.status}，${escapeHtml(info.person)}，点击查看或编辑" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEdit(${idx})}">
+        <div class="seat-top">
+          <div class="seat-id" title="${escapeHtml(d.id)}"><span class="seat-id-kicker">WORKSTATION NO.</span><span class="id-value">${escapeHtml(d.id)}</span></div>
+          <span class="seat-state"><i class="seat-state-dot" aria-hidden="true"></i>${info.status}</span>
+        </div>
+        <div class="seat-person">
+          <div class="seat-avatar" aria-hidden="true">${escapeHtml(avatar)}</div>
+          <div class="seat-person-text">
+            <div class="seat-name" title="${escapeHtml(info.person)}">${escapeHtml(info.person)}</div>
+            <div class="seat-company" title="${escapeHtml(d.company || '')}">${info.occupied ? escapeHtml(d.company || '暂无公司') : 'CURRENTLY AVAILABLE'}</div>
+          </div>
+        </div>
+        ${middle}
+        <div class="seat-bottom"><div class="seat-flags">${assetHtml}${flagHtml || (info.occupied && !assetHtml ? '<span class="seat-mini-tag">暂无资产及权限登记</span>' : '')}</div><span class="seat-more" aria-hidden="true">↗</span></div>
+      </div>`;
+}
+
+function renderSeatMatrix(group) {
+    return '<div class="matrix-wrap">' + group.map(d => {
+        const idx = globalData.indexOf(d);
+        const i = getSeatInfo(d);
+        return `<div class="matrix-seat ${i.kind}" onclick="openEdit(${idx})" role="button" tabindex="0"
+            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEdit(${idx})}"
+            aria-label="${escapeHtml(d.id)}，${escapeHtml(i.person)}，${i.status}，点击编辑"
+            title="${escapeHtml(d.id)} · ${escapeHtml(i.person)} · ${i.status}">
+          <div class="matrix-top"><span>${escapeHtml(d.id)}</span><i class="matrix-led" aria-hidden="true"></i></div>
+          <strong class="matrix-name">${escapeHtml(i.person)}</strong>
+          <span class="matrix-small">${i.occupied ? escapeHtml(i.allocation.allocator || d.company || '已占用') : (i.assetsCount ? `已登记 ${i.assetsCount} 类设备` : '可分配工位')}</span>
+        </div>`;
+    }).join('') + '</div>';
+}
+
+function renderSeatTable(group) {
+    const header = '<thead><tr><th>工位编号</th><th>状态</th><th>占用人</th><th>公司名称</th><th>技术经理</th><th>分配人</th><th>预计离场</th><th>设备登记</th><th>操作</th></tr></thead>';
+    const rows = group.map(d => {
+        const idx = globalData.indexOf(d);
+        const i = getSeatInfo(d);
+        return `<tr role="button" tabindex="0" onclick="openEdit(${idx})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEdit(${idx})}" aria-label="查看${escapeHtml(d.id)}工位详情">
+          <td class="table-main" title="${escapeHtml(d.id)}">${escapeHtml(d.id)}</td>
+          <td><span class="seat-state state-${i.kind}">${i.status}</span></td>
+          <td class="table-main" title="${escapeHtml(i.person)}">${escapeHtml(i.person)}</td>
+          <td title="${escapeHtml(d.company || '')}">${escapeHtml(d.company || '—')}</td>
+          <td>${escapeHtml(i.occupied ? (i.allocation.manager || '—') : '—')}</td>
+          <td>${escapeHtml(i.occupied ? (i.allocation.allocator || '—') : '—')}</td>
+          <td>${escapeHtml(i.occupied ? (i.allocation.departure || '—') : '—')}</td>
+          <td>${i.assetsCount} 类</td>
+          <td class="table-more">查看 ›</td>
+        </tr>`;
+    }).join('');
+    return `<div class="table-wrap"><table class="seat-table">${header}<tbody>${rows}</tbody></table></div>`;
+}
+
 function render() {
     const app = document.getElementById('app');
     app.innerHTML = '';
@@ -297,6 +696,10 @@ function render() {
     document.getElementById('stat_occupied').textContent = occupied;
     document.getElementById('stat_free').textContent = total - occupied;
     document.getElementById('stat_temp').textContent = temp;
+    const percent = total ? Math.round(occupied / total * 100) : 0;
+    document.getElementById('stat_rate').textContent = percent + '%';
+    document.getElementById('stat_ratio').innerHTML = `${occupied} <span>/ ${total}</span>`;
+    document.getElementById('util_ring').style.setProperty('--percent', percent);
 
     const visible = getFilteredData();
     document.getElementById('result_note').textContent =
@@ -315,37 +718,16 @@ function render() {
     });
 
     Object.keys(groups).sort().forEach(off => {
-        let html = `<div class="room-box"><div class="room-title">${escapeHtml(off)} <span style="font-weight:normal; font-size:13px; color:#999; margin-left:5px;">(${groups[off].length}个工位)</span></div><div class="grid">`;
-        groups[off].forEach(d => {
-            // 使用原始数据下标：筛选后点击工位仍然修改正确的数据库记录。
-            const idx = globalData.indexOf(d);
-            const isOcc = isOccupied(d);
-            const cls = isOcc ? (d.isTemp ? 'temp' : 'occ') : 'free';
-
-            let badges = '';
-            if(isOcc) {
-                badges += `<span class="badge-icon ${d.door ? 'active' : ''}" title="门禁">🔑</span>`;
-                badges += `<span class="badge-icon ${d.ding.includes('√') ? 'active' : ''}" title="钉钉">💬</span>`;
-                badges += `<span class="badge-icon ${d.rtx.includes('√') ? 'active' : ''}" title="RTX">🐧</span>`;
-            }
-
-            html += `
-            <div class="seat ${cls}" onclick="openEdit(${idx})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEdit(${idx})}">
-                <div class="status-bar"></div>
-                <div class="seat-content">
-                    <div class="s-main">
-                        <span class="s-id">${escapeHtml(d.id)}</span>
-                        <span class="s-name">${isOcc ? escapeHtml(d.name) : '空闲中'}</span>
-                    </div>
-                    <div class="s-footer">
-                        <span class="s-co" title="${escapeHtml(d.company || '')}">${isOcc ? escapeHtml(d.company || '暂无公司') : '-'}</span>
-                        <div class="s-badges">${badges}</div>
-                    </div>
-                </div>
-            </div>`;
-        });
-        html += '</div></div>';
-        app.innerHTML += html;
+        const group = groups[off];
+        const occ = group.filter(isOccupied).length;
+        const free = group.length - occ;
+        const progress = group.length ? Math.round(100 * occ / group.length) : 0;
+        const head = `<div class="room-title">
+          <div class="room-heading"><span class="room-marker">▦</span><span class="room-name">${escapeHtml(off)}</span><span class="room-count">${group.length} 个工位</span></div>
+          <span class="room-summary"><span class="room-progress"><span class="room-progress-fill" style="width:${progress}%"></span></span>已占用 ${occ} · 空闲 ${free}</span>
+        </div>`;
+        const content = viewMode === 'table' ? renderSeatTable(group) : viewMode === 'matrix' ? renderSeatMatrix(group) : `<div class="grid">${group.map(renderSeatCard).join('')}</div>`;
+        app.insertAdjacentHTML('beforeend', `<section class="room-box">${head}${content}</section>`);
     });
 }
 
