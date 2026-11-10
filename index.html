@@ -7,6 +7,8 @@
   
   <!-- === 核心新增：引入 Supabase 的 JS 驱动库 === -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Excel 导出：使用 SheetJS；加载失败时自动生成 Excel 可打开的 CSV -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
     /* === 原有 V37 Pro 的全套绝美 UI 样式 === */
@@ -62,9 +64,36 @@
     .asset-item input { margin-bottom: 0; padding: 8px; font-size: 13px; border:none; background: transparent; border-bottom: 1px dashed #ccc; border-radius: 0;}
     .modal-footer { display: flex; gap: 10px; margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee;}
     .modal-footer button { flex: 1; padding: 12px; }
-    #ip_warn { background: #ffeaea; color: var(--danger-red); padding: 8px 12px; border-radius: 6px; font-size: 13px; display: flex; align-items: center; gap: 5px;}
     .toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px 20px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 15px; box-shadow: 0 6px 16px rgba(0,0,0,0.2); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
     .toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+    /* V38: 统计、搜索、分配人筛选、导出 */
+    .header-actions { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+    .dashboard { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 18px 19px; box-shadow: var(--card-shadow); border-top: 4px solid #dfe6e9; }
+    .stat-card .stat-label { display: block; color: #636e72; font-size: 13px; font-weight: 600; margin-bottom: 9px; }
+    .stat-card .stat-number { display: block; font-size: 27px; font-weight: 800; line-height: 1.2; }
+    .stat-total { border-top-color: var(--primary-blue); }
+    .stat-occupied { border-top-color: var(--danger-red); }
+    .stat-free { border-top-color: var(--success-green); }
+    .stat-temp { border-top-color: var(--warning-yellow); }
+    .toolbar { background: white; border-radius: 12px; padding: 15px 18px; box-shadow: var(--card-shadow); display: flex; align-items: end; gap: 13px; flex-wrap: wrap; margin-bottom: 15px; }
+    .toolbar-field { min-width: 180px; flex: 1; }
+    .toolbar-field.search-field { flex: 2 1 280px; }
+    .toolbar-field label { display: block; font-size: 12px; font-weight: 700; color: #636e72; margin-bottom: 6px; }
+    .toolbar-field input, .toolbar-field select { width: 100%; margin: 0; height: 42px; }
+    .toolbar .btn { height: 42px; white-space: nowrap; }
+    .result-note { color: #636e72; font-size: 13px; margin: 0 2px 18px; }
+    .no-results { background: #fff; border-radius: 12px; text-align: center; padding: 48px 15px; color: #636e72; box-shadow: var(--card-shadow); }
+    .btn-green { background: #12a467; } .btn-green:hover { background: #0b8753; }
+    @media (max-width: 720px) {
+      body { padding: 12px; padding-bottom: 60px; }
+      .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .header-actions { width: 100%; justify-content: flex-start; }
+      .dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .stat-card { padding: 14px; }
+      .toolbar { padding: 12px; }
+      .toolbar-field { flex: 1 1 100%; }
+    }
   </style>
 </head>
 <body>
@@ -74,17 +103,46 @@
         <span style="font-size: 22px;">🛡️</span>
         <div style="display:flex; flex-direction: column;">
             <span>工位管理系统</span>
-            <span style="font-size:12px; color:#999; font-weight:normal;">V37 Pro Edition - <span style="color:var(--success-green)">Powered by Supabase</span></span>
+            <span style="font-size:12px; color:#999; font-weight:normal;">V38 Pro Edition - <span style="color:var(--success-green)">Powered by Supabase</span></span>
         </div>
     </h3>
-    <button class="btn btn-blue" onclick="init()">🔄 刷新数据</button>
+    <div class="header-actions">
+      <button class="btn btn-green" onclick="exportExcel()">📊 导出Excel台账</button>
+      <button class="btn btn-blue" onclick="init()">🔄 刷新数据</button>
+    </div>
 </div>
+
+<div class="dashboard" aria-label="工位使用统计">
+  <div class="stat-card stat-total"><span class="stat-label">🏢 总工位</span><strong class="stat-number" id="stat_total">0</strong></div>
+  <div class="stat-card stat-occupied"><span class="stat-label">👤 已占用</span><strong class="stat-number" id="stat_occupied">0</strong></div>
+  <div class="stat-card stat-free"><span class="stat-label">🟢 空闲工位</span><strong class="stat-number" id="stat_free">0</strong></div>
+  <div class="stat-card stat-temp"><span class="stat-label">🟠 临时离场</span><strong class="stat-number" id="stat_temp">0</strong></div>
+</div>
+
+<div class="toolbar">
+  <div class="toolbar-field search-field">
+    <label for="global_search">🔎 全局搜索</label>
+    <input type="text" id="global_search" placeholder="输入姓名、公司、工位编号（也支持区域）" oninput="render()" autocomplete="off">
+  </div>
+  <div class="toolbar-field">
+    <label for="allocator_filter">👥 按工位分配人筛选</label>
+    <select id="allocator_filter" onchange="render()">
+      <option value="">全部分配人（含历史记录）</option>
+      <option value="薛沛然">薛沛然</option>
+      <option value="孟巧玲">孟巧玲</option>
+      <option value="李月">李月</option>
+      <option value="史素慧">史素慧</option>
+    </select>
+  </div>
+  <button class="btn btn-gray" onclick="clearFilters()">清空筛选</button>
+</div>
+<div class="result-note" id="result_note">当前显示 0 个工位</div>
 
 <div id="app" style="text-align:center; padding:80px 20px; color:#999; font-size: 18px;">
     <div style="font-size: 40px; margin-bottom: 20px;">🤔</div>正在加载云端数据...
 </div>
 
-<div id="toast">✅ 保存成功</div>
+<div id="toast" class="toast">✅ 保存成功</div>
 
 <div id="modal" class="modal">
     <div class="modal-box">
@@ -119,14 +177,7 @@
         <input type="text" list="co_list" id="i_co" placeholder="请输入公司名称（必填）" required>
         <datalist id="co_list"></datalist>
 
-        <div class="sec-title">🌐 网络与权限</div>
-        <div id="div_ip_input" style="display:none"><input type="text" id="i_cloud_text" placeholder="IP地址" onblur="checkIpConflict(this.value)"></div>
-        <div id="div_ip_select" style="display:none">
-            <select id="i_cloud_sel" style="margin-bottom: 5px;"></select>
-            <div style="font-size:12px;color:#666; margin-bottom: 10px;">当前 IP: <span id="cur_ip_display" style="font-weight:bold; color:var(--primary-blue)"></span></div>
-        </div>
-        <div id="ip_warn" style="display:none; margin-bottom:12px;">⚠️ 冲突！该 IP 已被占用</div>
-        
+        <div class="sec-title">🔐 权限与工牌</div>
         <div class="todo-row"><span>🔑 门禁权限</span><input type="text" id="i_door" placeholder="输入卡号" style="width: 120px; margin:0; padding: 8px;"></div>
         <div class="todo-row"><span>💳 实体工牌</span><input type="text" id="i_badge" placeholder="工牌号" style="width: 120px; margin:0; padding: 8px;"></div>
         <div class="todo-row"><span>💬 钉钉群</span><label class="switch"><input type="checkbox" id="c_ding"><span class="slider"></span></label></div>
@@ -166,33 +217,27 @@ const SUPABASE_KEY = 'sb_publishable_EqKbgkgdxQox4Be2Kpr5kg_gY3taem8';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let globalData = [], freeIps = [], cachedCompanies = [];
+let globalData = [], cachedCompanies = [];
 let editIdx = -1;
 
 async function init() {
     if(globalData.length === 0) {
         document.getElementById('app').innerHTML = '<div style="font-size: 40px; margin-bottom: 20px;">🤔</div>正在加载云端数据...';
     }
-    
+
     try {
-        const [wsRes, ipRes] = await Promise.all([
-            supabaseClient.from('workstations').select('*').order('id', { ascending: true }),
-            supabaseClient.from('ips').select('*')
-        ]);
+        // 保留原数据库表结构；仅不再使用 ips 表和 cloud_ip 字段。
+        const { data, error } = await supabaseClient.from('workstations')
+            .select('*').order('id', { ascending: true });
+        if(error) throw error;
 
-        if (wsRes.error) throw wsRes.error;
-        if (ipRes.error) throw ipRes.error;
-
-        cachedCompanies = [...new Set(wsRes.data.map(d => d.company).filter(Boolean))];
-        freeIps = ipRes.data.filter(i => !i.status || i.status.trim() === '').map(i => i.ip);
-
-        globalData = wsRes.data.map((row, index) => ({
+        cachedCompanies = [...new Set((data || []).map(d => d.company).filter(Boolean))];
+        globalData = (data || []).map((row, index) => ({
             rowIndex: index,
             id: row.id,
             name: row.name || '',
             office: row.office || '未分配',
             company: row.company || '',
-            cloudIp: row.cloud_ip || '',
             door: row.door || '',
             ding: row.ding || '',
             rtx: row.rtx || '',
@@ -202,63 +247,182 @@ async function init() {
             remark: row.remark || '',
             isTemp: row.is_temp || false
         }));
-
         render();
-    } catch (err) {
-        alert("获取数据失败：" + err.message);
-        document.getElementById('app').innerHTML = `<div style="color:var(--danger-red);">❌ 连接数据库失败，请检查网络或控制台报错。<br>${err.message}</div>`;
+    } catch(err) {
+        alert('获取数据失败：' + err.message);
+        document.getElementById('app').textContent = '❌ 连接数据库失败：' + err.message;
     }
 }
-
 window.onload = init;
+
+function isOccupied(d) {
+    return !!String(d.name || '').trim();
+}
+
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function clearFilters() {
+    document.getElementById('global_search').value = '';
+    document.getElementById('allocator_filter').value = '';
+    render();
+}
+
+function getFilteredData() {
+    const keyword = document.getElementById('global_search').value.trim().toLocaleLowerCase();
+    const allocator = document.getElementById('allocator_filter').value;
+    return globalData.filter(d => {
+        const allocation = parseAllocationName(d.name);
+        const searchable = [d.id, d.name, d.company, d.office].join(' ').toLocaleLowerCase();
+        return (!keyword || searchable.includes(keyword)) && (!allocator || allocation.allocator === allocator);
+    });
+}
 
 function render() {
     const app = document.getElementById('app');
     app.innerHTML = '';
     const dl = document.getElementById('co_list');
     dl.innerHTML = '';
-    cachedCompanies.forEach(c => dl.innerHTML += `<option value="${c}">`);
+    cachedCompanies.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c;
+        dl.appendChild(option);
+    });
+
+    const total = globalData.length;
+    const occupied = globalData.filter(isOccupied).length;
+    const temp = globalData.filter(d => isOccupied(d) && d.isTemp).length;
+    document.getElementById('stat_total').textContent = total;
+    document.getElementById('stat_occupied').textContent = occupied;
+    document.getElementById('stat_free').textContent = total - occupied;
+    document.getElementById('stat_temp').textContent = temp;
+
+    const visible = getFilteredData();
+    document.getElementById('result_note').textContent =
+        `当前显示 ${visible.length} / ${total} 个工位（以上统计均为全部工位，临时离场计入已占用）`;
+
+    if(visible.length === 0) {
+        app.innerHTML = '<div class="no-results">🔎 没有找到符合条件的工位，请换个关键词或清空筛选。</div>';
+        return;
+    }
 
     const groups = {};
-    globalData.forEach(d => {
-        const off = d.office || "未分配区域";
+    visible.forEach(d => {
+        const off = d.office || '未分配区域';
         if(!groups[off]) groups[off] = [];
         groups[off].push(d);
     });
 
     Object.keys(groups).sort().forEach(off => {
-        let html = `<div class="room-box"><div class="room-title">${off} <span style="font-weight:normal; font-size:13px; color:#999; margin-left:5px;">(${groups[off].length}个工位)</span></div><div class="grid">`;
+        let html = `<div class="room-box"><div class="room-title">${escapeHtml(off)} <span style="font-weight:normal; font-size:13px; color:#999; margin-left:5px;">(${groups[off].length}个工位)</span></div><div class="grid">`;
         groups[off].forEach(d => {
+            // 使用原始数据下标：筛选后点击工位仍然修改正确的数据库记录。
             const idx = globalData.indexOf(d);
-            const isOcc = d.name && d.name!=='';
+            const isOcc = isOccupied(d);
             const cls = isOcc ? (d.isTemp ? 'temp' : 'occ') : 'free';
-            
+
             let badges = '';
             if(isOcc) {
                 badges += `<span class="badge-icon ${d.door ? 'active' : ''}" title="门禁">🔑</span>`;
-                badges += `<span class="badge-icon ${d.cloudIp ? 'active' : ''}" title="IP">🌐</span>`;
                 badges += `<span class="badge-icon ${d.ding.includes('√') ? 'active' : ''}" title="钉钉">💬</span>`;
                 badges += `<span class="badge-icon ${d.rtx.includes('√') ? 'active' : ''}" title="RTX">🐧</span>`;
             }
 
             html += `
-            <div class="seat ${cls}" onclick="openEdit(${idx})">
+            <div class="seat ${cls}" onclick="openEdit(${idx})" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEdit(${idx})}">
                 <div class="status-bar"></div>
                 <div class="seat-content">
                     <div class="s-main">
-                        <span class="s-id">${d.id}</span>
-                        <span class="s-name">${isOcc ? d.name : '空闲中'}</span>
+                        <span class="s-id">${escapeHtml(d.id)}</span>
+                        <span class="s-name">${isOcc ? escapeHtml(d.name) : '空闲中'}</span>
                     </div>
                     <div class="s-footer">
-                        <span class="s-co">${isOcc ? (d.company || '暂无公司') : '-'}</span>
+                        <span class="s-co" title="${escapeHtml(d.company || '')}">${isOcc ? escapeHtml(d.company || '暂无公司') : '-'}</span>
                         <div class="s-badges">${badges}</div>
                     </div>
                 </div>
             </div>`;
         });
-        html += `</div></div>`;
+        html += '</div></div>';
         app.innerHTML += html;
     });
+}
+
+
+// 导出与当前搜索/筛选条件一致的台账；未筛选时导出全部。
+function getExportRows() {
+    const header = [
+        '所属区域', '工位编号', '工位状态', '工位占用人', '技术经理', '工位分配人',
+        '预计离场时间', '公司名称', '临时离场', '门禁卡号', '实体工牌号',
+        '钉钉群', 'RTX通讯', '保密协议', '键鼠套件', '显示器', '云终端盒',
+        '金融终端', '打印机', '高拍仪', '柜内清', '柜外清', '备注'
+    ];
+    const rows = getFilteredData().map(d => {
+        const a = parseAllocationName(d.name);
+        const assets = d.assets || {};
+        const occupied = isOccupied(d);
+        return [
+            d.office, String(d.id), !occupied ? '空闲' : (d.isTemp ? '临时离场' : '已占用'),
+            a.occupant, a.manager, a.allocator, a.departure, d.company,
+            occupied && d.isTemp ? '是' : '否', d.door, d.badge,
+            d.ding.includes('√') ? '是' : '否', d.rtx.includes('√') ? '是' : '否',
+            d.nda.includes('√') ? '是' : '否',
+            assets.keyboard || '', assets.monitor || '', assets.cloudBox || '',
+            assets.terminal || '', assets.printer || '', assets.camera || '',
+            assets.cin || '', assets.cout || '', d.remark
+        ].map(value => String(value ?? ''));
+    });
+    return [header, ...rows];
+}
+
+function exportExcel() {
+    if(globalData.length === 0) {
+        alert('目前没有已加载的工位数据，请先刷新数据。');
+        return;
+    }
+    const rows = getExportRows();
+    if(rows.length === 1) {
+        alert('当前筛选条件下没有工位可以导出。');
+        return;
+    }
+    const stamp = new Date().toLocaleDateString('sv-SE');
+    const filtered = !!(document.getElementById('global_search').value.trim() || document.getElementById('allocator_filter').value);
+    const filename = `工位管理台账_${stamp}${filtered ? '_筛选结果' : ''}`;
+    try {
+        if(typeof XLSX !== 'undefined') {
+            const sheet = XLSX.utils.aoa_to_sheet(rows);
+            sheet['!cols'] = [
+                {wch:18},{wch:16},{wch:13},{wch:17},{wch:17},{wch:17},
+                {wch:18},{wch:28},{wch:12},{wch:16},{wch:16},
+                {wch:12},{wch:12},{wch:12},{wch:18},{wch:18},{wch:18},
+                {wch:18},{wch:18},{wch:18},{wch:18},{wch:18},{wch:32}
+            ];
+            sheet['!autofilter'] = {ref: sheet['!ref']};
+            const book = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(book, sheet, '工位台账');
+            XLSX.writeFile(book, filename + '.xlsx');
+            showToast(`✅ 已导出 ${rows.length - 1} 条工位记录`);
+        } else {
+            // CDN 被屏蔽时，离线降级到 Excel 可直接打开的 UTF-8 CSV。
+            const csv = rows.map(row => row.map(cell => {
+                const value = /^[=+@\-\t\r]/.test(cell) ? "'" + cell : cell;
+                return '"' + value.replace(/"/g, '""') + '"';
+            }).join(',')).join('\r\n');
+            const blob = new Blob(['\uFEFF', csv], {type:'text/csv;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename + '.csv';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            showToast('已导出CSV（Excel可打开），Excel组件未加载');
+        }
+    } catch(err) {
+        alert('导出失败：' + err.message);
+    }
 }
 
 function parseAllocationName(value) {
@@ -318,7 +482,6 @@ function openEdit(idx) {
     updateNamePreview();
     document.getElementById('i_co').value = d.company;
     document.getElementById('c_temp').checked = d.isTemp;
-    document.getElementById('ip_warn').style.display = 'none';
     
     document.getElementById('i_door').value = d.door;
     document.getElementById('i_badge').value = d.badge;
@@ -336,34 +499,7 @@ function openEdit(idx) {
     document.getElementById('a_cin').value = d.assets.cin || '';
     document.getElementById('a_cout').value = d.assets.cout || '';
 
-    const is5A03 = (d.office || "").indexOf('5A03') > -1;
-    if(is5A03) {
-        document.getElementById('div_ip_input').style.display = 'block';
-        document.getElementById('div_ip_select').style.display = 'none';
-        document.getElementById('i_cloud_text').value = d.cloudIp;
-    } else {
-        document.getElementById('div_ip_input').style.display = 'none';
-        document.getElementById('div_ip_select').style.display = 'block';
-        const sel = document.getElementById('i_cloud_sel');
-        sel.innerHTML = '<option value="">-- 保持不变 --</option>';
-        document.getElementById('cur_ip_display').innerText = d.cloudIp || '暂无';
-        if(d.cloudIp) sel.innerHTML += `<option value="${d.cloudIp}" selected>✅ ${d.cloudIp} (当前持有)</option>`;
-        freeIps.forEach(ip => sel.innerHTML += `<option value="${ip}">🟢 ${ip}</option>`);
-    }
     document.getElementById('modal').style.display = 'flex';
-}
-
-function checkIpConflict(ip) {
-    if(!ip) return;
-    const currentId = globalData[editIdx].id;
-    const conflict = globalData.find(p => p.cloudIp === ip && p.id !== currentId);
-    const warnEl = document.getElementById('ip_warn');
-    if(conflict) {
-        warnEl.innerText = `⚠️ 冲突！该 IP 已被 【${conflict.name}】 在 [${conflict.office}] 占用`;
-        warnEl.style.display = 'block';
-    } else {
-        warnEl.style.display = 'none';
-    }
 }
 
 function showToast(msg) {
@@ -409,6 +545,7 @@ async function save() {
         rtx: document.getElementById('c_rtx').checked ? '√' : '',
         nda: document.getElementById('c_nda').checked ? '√' : '',
         assets: {
+            ...(d.assets || {}),
             keyboard: document.getElementById('a_kb').value,
             monitor: document.getElementById('a_mon').value,
             cloudBox: document.getElementById('a_box').value,
@@ -419,10 +556,6 @@ async function save() {
             cout: document.getElementById('a_cout').value
         }
     };
-
-    const is5A03 = (d.office || "").indexOf('5A03') > -1;
-    let newIp = is5A03 ? document.getElementById('i_cloud_text').value : document.getElementById('i_cloud_sel').value;
-    if(newIp !== "") updatePayload.cloud_ip = newIp;
 
     try {
         const { error } = await supabaseClient.from('workstations').update(updatePayload).eq('id', currentId);
@@ -443,12 +576,13 @@ async function doLeave() {
     if(!d.name) { alert("当前工位已经是空闲状态"); return; }
     if(!confirm(`⚠️ 高危操作
 
-确定要为【${d.name}】办理彻底离场吗？`)) return;
+确定要为【${d.name}】办理离场吗？
+人员信息将清空，工位设备登记会保留。`)) return;
     
+    // 仅清除人员/权限等信息；不再修改 assets，也不触碰数据库中 cloud_ip 历史值。
     const emptyPayload = {
-        name: "", company: "", cloud_ip: "", is_temp: false,
-        door: "", ding: "", rtx: "", nda: "", badge: "", remark: "",
-        assets: { keyboard:'', monitor:'', cloudBox:'', terminal:'', cin:'', cout:'', printer:'', camera:'' }
+        name: "", company: "", is_temp: false,
+        door: "", ding: "", rtx: "", nda: "", badge: "", remark: ""
     };
     
     try {
@@ -456,7 +590,7 @@ async function doLeave() {
         if (error) throw error;
         
         document.getElementById('modal').style.display = 'none';
-        showToast("🗑️ 已办理离场");
+        showToast("🗑️ 已办理离场，设备信息已保留");
         init();
     } catch(err) {
         alert("❌ 离场操作失败：" + err.message);
