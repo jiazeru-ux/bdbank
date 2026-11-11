@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes">
-<title>Workspace OS V43 · 工位资源管理</title>
+<title>Workspace OS V44 · 工位资源管理</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<style>/* Workspace OS V43 · Refined Interaction Edition · no change to database */
+<style>/* Workspace OS V44 · Refined SaaS Edition · no change to database */
 :root{--bg:#f6f7fb;--paper:#fff;--ink:#19243a;--muted:#8793a7;--line:#edf0f5;--primary:#e83686;--primary-pale:#fff0f7;--blue:#4f75d4;--blue-pale:#ebf2ff;--green:#17a779;--green-pale:#e8f8f2;--amber:#e6a044;--amber-pale:#fff6e7;--shadow:0 4px 22px rgba(36,48,83,.045);--shadow-hover:0 16px 35px rgba(40,50,86,.10);--radius:18px;--danger-red:#e45b69}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,.seat:focus-visible,.matrix-seat:focus-visible{outline:3px solid rgba(232,54,134,.22);outline-offset:2px}svg{flex-shrink:0}.svg-icon{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.app-shell{min-height:100vh;display:flex}
 /* restrained sidebar */
@@ -36,7 +36,7 @@
 @media(max-width:430px){.dashboard{gap:8px}.stat-card{padding:12px 10px;gap:8px}.stat-icon{width:31px;height:31px}.stat-number{font-size:24px}.stat-main{gap:4px}.summary-key{display:none}.page-heading h1{font-size:23px}.matrix-wrap{grid-template-columns:repeat(2,minmax(0,1fr))}.matrix-seat{padding:10px 9px}.board-head h2{font-size:15px}.view-toggle{width:100%;justify-content:space-between}.view-btn{flex:1;padding:9px 6px}.asset-grid{gap:7px}.asset-item{padding:8px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 
-/* V43 · refined white SaaS interactions */
+/* V44 · refined white SaaS interactions */
 :root{--primary:#db327b;--primary-pale:#fff1f7;--ink:#213047;--bg:#f7f8fb;--shadow:0 5px 25px rgba(31,48,83,.042)}
 .page-heading{margin-bottom:22px}.workarea{padding-top:28px}.stat-card{box-shadow:0 6px 22px rgba(37,51,82,.043);transition:transform .2s,box-shadow .2s}.stat-card:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(37,51,82,.085)}
 .summary-ribbon{background:#fff;box-shadow:none}.board,.room-nav,.toolbar{box-shadow:0 6px 24px rgba(37,51,82,.04)}
@@ -59,12 +59,32 @@ body.drawer-open{overflow:hidden}.modal{z-index:120;display:none;align-items:str
 @media(max-width:430px){.room-insights-heading>span{font-size:9px}.room-insight-grid{grid-template-columns:1fr 1fr}.matrix-wrap{grid-template-columns:repeat(2,minmax(0,1fr))}.matrix-zone{padding:10px}.seat-preview{display:none}.modal-footer{flex-wrap:nowrap}.modal-footer .btn{min-width:0;padding:10px 8px;font-size:11px}.modal-footer .btn-blue{flex:1.4}}
 @media(prefers-reduced-motion:reduce){.modal-box{animation:none}}
 
+
+/* V44: compact operational dashboard, clearer focal point */
+.workarea{padding-top:22px}.page-heading{margin-bottom:16px}.page-heading h1{font-size:25px}.page-heading p{margin-top:5px}.heading-actions{padding-top:4px}
+.overview .section-row{margin-bottom:10px}.dashboard{gap:11px}.stat-card{min-height:81px;padding:13px 16px;border-radius:14px;gap:12px;align-items:center}.stat-icon{width:36px;height:36px;border-radius:11px}.stat-icon svg{width:18px;height:18px}.stat-number{font-size:26px}.stat-main{margin-top:6px}.stat-caption{margin-top:5px;font-size:9px}
+.summary-ribbon{margin-top:10px;padding:9px 14px;gap:12px;border-radius:12px}.summary-ring{width:40px;height:40px;padding:5px}.summary-ring-inner{font-size:10px}.summary-details strong{font-size:12px}.summary-details span{font-size:10px;margin-top:2px}
+.workspace-section{margin-top:21px}.workspace-section>.section-row{margin-bottom:11px}.toolbar{margin-bottom:10px;padding:12px 14px}.toolbar input,.toolbar select{height:39px}.btn-clear{height:39px;min-height:39px}.room-nav{top:84px}
+.room-insights-details{margin-top:19px;border:1px solid #edf0f5;border-radius:16px;background:#fff;box-shadow:var(--shadow);overflow:hidden}.room-insights-details>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:15px 19px;color:#35445e;gap:14px}.room-insights-details>summary::-webkit-details-marker{display:none}.room-insights-details>summary strong{display:block;font-size:12px}.room-insights-details>summary small{display:block;color:#96a1b3;font-size:10px;margin-top:4px}.room-insights-details .summary-action{color:#cc4380;font-size:11px;white-space:nowrap}.room-insights-details[open] .summary-action span{display:inline-block;transform:rotate(180deg)}.room-insights-details .room-insights{margin:0;border:0;border-top:1px solid #eef1f5;border-radius:0;box-shadow:none}
+/* V44 filters are explicit and compose with existing search/allocator/room filters */
+.status-filter-bar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 1px 14px}.status-filter-label{font-size:11px;color:#8794a8;font-weight:700;margin-right:4px}.status-filter-btn{border:1px solid #e9edf3;background:#fff;border-radius:999px;color:#718097;font-size:11px;font-weight:700;padding:8px 13px;min-height:33px;display:inline-flex;align-items:center;gap:6px;transition:background .18s,border-color .18s,box-shadow .18s,color .18s}.status-filter-btn:hover{color:#b92e6e;background:#fff9fc}.status-filter-btn.active{border-color:#f1b5d3;background:#fff0f7;color:#cf3679;box-shadow:0 2px 10px #ed4d8a10}.status-dot{width:7px;height:7px;border-radius:50%;background:#6285db;display:inline-block}.status-dot.free{background:#28b989}.status-dot.temp{background:#e9a34a}.status-help{margin-left:auto;font-size:10px;color:#adb6c4}
+/* Flat auto layout only; 01/02 seat-group sequence is intentionally removed */
+.matrix-wrap-flat{background:linear-gradient(155deg,#fbfcfe,#f8fafc);border:1px solid #e9edf3;border-radius:16px;padding:17px;grid-template-columns:repeat(auto-fill,minmax(min(100%,151px),1fr));gap:13px}
+.matrix-wrap-flat .matrix-seat{min-height:143px;border:1px solid #e9edf2;box-shadow:0 4px 16px rgba(42,55,82,.04);border-radius:13px;padding:13px 12px;background:linear-gradient(180deg,#fff 0%,#fcfdff 100%);display:flex;flex-direction:column}.matrix-seat:hover{transform:translateY(-3px)}.matrix-wrap-flat .matrix-top{margin-bottom:4px}.matrix-wrap-flat .matrix-code{font-size:12px;color:#43536c;font-weight:800;margin:9px 0 6px;letter-spacing:.1px}.matrix-wrap-flat .matrix-bottom{margin-top:auto}.matrix-wrap-flat .matrix-name{font-size:12px}.matrix-wrap-flat .matrix-status{border-radius:99px;padding:5px 7px}
+.desk-figure{width:58px;height:42px;display:flex;align-items:center;justify-content:center;overflow:visible}.desk-figure::before,.desk-figure::after{display:none!important}.desk-figure svg{display:block;width:57px;height:43px;overflow:visible}.desk-monitor{fill:var(--seat-color);opacity:.93}.desk-screen{fill:var(--seat-pale)}.desk-metal{fill:none;stroke:var(--seat-color);stroke-width:3;stroke-linecap:round}.desk-top{fill:var(--seat-color);opacity:.78}.desk-leg{stroke:var(--seat-color);stroke-width:3;stroke-linecap:round;opacity:.68}.desk-chair{fill:var(--seat-pale);stroke:var(--seat-color);stroke-width:2.5}.desk-chair-line{stroke:var(--seat-color);stroke-width:2;stroke-linecap:round;fill:none;opacity:.75}
+/* Fixed drawer identity + category tabs + fixed footer, with original inputs intact */
+.drawer-fixed-head{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.98);backdrop-filter:blur(12px);border-bottom:1px solid #edf0f5;padding-bottom:0}.drawer-kicker{position:relative;top:auto;padding:15px 0 10px;border-bottom:0}.drawer-identity{padding:6px 0 5px}.drawer-icon{width:40px;height:40px;font-size:20px}.drawer-identity-copy h2{font-size:20px}.drawer-subtitle{margin:3px 0 12px;font-size:10px}.drawer-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:10px}.drawer-tab{background:transparent;border:0;border-bottom:3px solid transparent;padding:12px 3px;color:#8490a5;font-weight:720;font-size:12px}.drawer-tab:hover{color:#c83579}.drawer-tab.active{color:#ca347a;border-bottom-color:#e03884}.drawer-body{min-height:210px;padding:12px 0 9px}.drawer-tab-panel[hidden]{display:none!important}.drawer-tab-panel .sec-title:first-child{margin-top:8px}.drawer-tab-panel .modal-header{margin-top:0}.drawer-tab-panel .sec-title{margin-top:13px}.modal-footer{margin-top:0;bottom:-25px}.modal-footer .btn{min-height:43px}.modal-footer .btn-blue{flex:1.8}
+@media(max-width:1000px){.dashboard{grid-template-columns:repeat(4,minmax(0,1fr))}.stat-card{padding:12px 10px;gap:6px}.stat-number{font-size:23px}.stat-icon{width:31px;height:31px}.stat-caption{display:none}}
+@media(max-width:780px){.dashboard{grid-template-columns:repeat(2,minmax(0,1fr))}.status-help{display:none}.matrix-wrap-flat{grid-template-columns:repeat(auto-fill,minmax(min(100%,145px),1fr));gap:10px}.room-insights-details{margin-top:13px}}
+@media(max-width:710px){.page-heading{margin-bottom:13px}.page-heading h1{font-size:23px}.workarea{padding-top:14px}.dashboard{gap:7px}.stat-card{min-height:69px;padding:10px;border-radius:12px}.stat-icon{width:29px;height:29px}.stat-number{font-size:23px}.summary-ribbon{padding:9px}.summary-ring{width:34px;height:34px}.summary-key{display:none}.workspace-section{margin-top:15px}.board-inner{padding:12px}.matrix-wrap-flat{padding:10px;gap:9px}.matrix-wrap-flat .matrix-seat{min-height:132px}.status-filter-bar{gap:6px;margin-bottom:11px}.status-filter-btn{padding:7px 10px;font-size:10px}.status-filter-label{display:none}.drawer-subtitle{margin-bottom:8px}.drawer-tab{padding:11px 0;font-size:11px}}
+@media(max-width:430px){.stat-icon{width:28px;height:28px}.stat-number{font-size:22px}.matrix-wrap-flat{grid-template-columns:repeat(2,minmax(0,1fr))}.matrix-wrap-flat .matrix-seat{min-height:136px}.drawer-fixed-head{z-index:4}.modal-footer{z-index:4}.modal-footer .btn{padding:9px 6px;font-size:11px}}
+
 </style>
 </head>
 <body>
 <div class="app-shell">
 <aside class="sidebar" aria-label="主导航">
- <div class="brand"><div class="brand-mark"><svg class="svg-icon" width="23" height="23" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 17h6M17 14v6"/></svg></div><div class="brand-label"><strong>工位管理</strong><small>WORKSPACE OS · V43</small></div></div>
+ <div class="brand"><div class="brand-mark"><svg class="svg-icon" width="23" height="23" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 17h6M17 14v6"/></svg></div><div class="brand-label"><strong>工位管理</strong><small>WORKSPACE OS · V44</small></div></div>
  <div class="nav-caption">工作空间</div>
  <nav class="app-nav" aria-label="页面视图">
  <button type="button" id="nav_home" class="nav-item active" onclick="navigateTo('home')" title="运营总览" aria-label="运营总览"><svg class="svg-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg><span>运营总览</span></button>
@@ -82,8 +102,8 @@ body.drawer-open{overflow:hidden}.modal{z-index:120;display:none;align-items:str
 <main class="main">
  <div class="topbar"><div class="breadcrumb"><span>空间管理</span><svg class="svg-icon" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><b>工作台</b></div><div class="topbar-actions"><span class="sync-chip" id="sync_chip"><i class="live-dot"></i><span id="sync_status">正在连接云端</span></span><span class="top-avatar">OS</span></div></div>
  <div class="workarea">
-  <header class="page-heading"><div><div class="eyebrow">WORKSPACE MANAGEMENT</div><h1>工位管理工作台</h1><p>让每一张工位、每一位人员和每一件设备，都井然有序。</p></div><div class="heading-actions"><button type="button" class="btn btn-outline" onclick="init()"><svg class="svg-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4L3 9V4m0 5h5M4 13a8 8 0 0 0 14.5 4L21 15v5m0-5h-5"/></svg>刷新数据</button><button type="button" class="btn btn-primary" onclick="exportExcel()"><svg class="svg-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 16v4h16v-4"/></svg>导出 Excel</button></div></header>
-  <section id="overview" class="overview" aria-label="工位统计"><div class="section-row"><h2>实时数据概览</h2><span class="section-meta" id="last_updated">等待数据载入</span></div>
+  <header class="page-heading"><div><div class="eyebrow">WORKSPACE MANAGEMENT</div><h1>工位管理工作台</h1><p>工位状态、人员归属与设备登记一目了然。</p></div><div class="heading-actions"><button type="button" class="btn btn-outline" onclick="init()"><svg class="svg-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4L3 9V4m0 5h5M4 13a8 8 0 0 0 14.5 4L21 15v5m0-5h-5"/></svg>刷新数据</button><button type="button" class="btn btn-primary" onclick="exportExcel()"><svg class="svg-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M4 16v4h16v-4"/></svg>导出 Excel</button></div></header>
+  <section id="overview" class="overview" aria-label="工位统计"><div class="section-row"><h2>工位数据</h2><span class="section-meta" id="last_updated">等待数据载入</span></div>
    <div class="dashboard">
     <div class="stat-card stat-total"><div class="stat-icon"><svg class="svg-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11M15 9v11"/></svg></div><div><span class="stat-label">工位总数</span><div class="stat-main"><strong id="stat_total" class="stat-number">0</strong><small>个工位</small></div><div class="stat-caption">全部工位容量</div></div></div>
     <div class="stat-card stat-occupied"><div class="stat-icon"><svg class="svg-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6m2 9v-2a5 5 0 0 0-3-4.6"/></svg></div><div><span class="stat-label">已占用</span><div class="stat-main"><strong id="stat_occupied" class="stat-number">0</strong><small>个工位</small></div><div class="stat-caption">含临时离场人员</div></div></div>
@@ -91,17 +111,29 @@ body.drawer-open{overflow:hidden}.modal{z-index:120;display:none;align-items:str
     <div class="stat-card stat-temp"><div class="stat-icon"><svg class="svg-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div><span class="stat-label">临时离场</span><div class="stat-main"><strong id="stat_temp" class="stat-number">0</strong><small>个工位</small></div><div class="stat-caption">仍计入占用数量</div></div></div>
    </div>
    <div class="summary-ribbon"><div class="summary-ring" id="util_ring" style="--percent:0"><div class="summary-ring-inner" id="stat_rate">0%</div></div><div class="summary-details"><strong>工位使用率</strong><span>当前已分配 <b id="stat_ratio">0 / 0</b> 个工位 · 按数据库实际数据自动统计</span></div><div class="summary-key"><span class="key-item"><i class="key-dot occ"></i>使用中</span><span class="key-item"><i class="key-dot free"></i>空闲</span><span class="key-item"><i class="key-dot temp"></i>临时离场</span></div></div>
-   <div class="room-insights" id="room_insights" aria-label="房间工位占用率"><div class="room-insights-heading"><strong>空间使用概况</strong><span>按房间统计 · 占用含临时离场</span></div><div id="room_insight_grid" class="room-insight-grid"><span class="insight-placeholder">正在载入房间使用情况...</span></div></div>
+
   </section>
-  <section id="workspaces" class="workspace-section" aria-label="工位总览"><div class="section-row"><h2>工位空间总览</h2><span class="section-meta">按原有房间与工位编号智能分组 · 不代表真实平面位置</span></div>
+  <section id="workspaces" class="workspace-section" aria-label="工位总览"><div class="section-row"><h2>工位总览</h2><span class="section-meta">按真实房间与工位编号自动排列 · 非实际平面位置</span></div>
   <div class="toolbar"><div class="toolbar-field search-field"><label for="global_search">快速搜索</label><div class="search-wrap"><svg class="svg-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="global_search" type="search" placeholder="搜索姓名、公司、工位编号或房间" oninput="render()" autocomplete="off"></div></div>
    <div class="toolbar-field"><label for="allocator_filter">工位分配人</label><select id="allocator_filter" onchange="render()"><option value="">全部分配人（含历史）</option><option value="薛沛然">薛沛然</option><option value="孟巧玲">孟巧玲</option><option value="李月">李月</option><option value="史素慧">史素慧</option></select></div>
    <button type="button" class="btn btn-clear" onclick="clearFilters()">清空筛选</button>
   </div>
+  <div class="status-filter-bar" role="group" aria-label="按工位状态筛选">
+    <span class="status-filter-label">状态筛选</span>
+    <button type="button" class="status-filter-btn active" data-status="all" aria-pressed="true" onclick="setStatusFilter('all')">全部工位</button>
+    <button type="button" class="status-filter-btn" data-status="occ" aria-pressed="false" onclick="setStatusFilter('occ')"><i class="status-dot occ"></i>使用中</button>
+    <button type="button" class="status-filter-btn" data-status="free" aria-pressed="false" onclick="setStatusFilter('free')"><i class="status-dot free"></i>空闲</button>
+    <button type="button" class="status-filter-btn" data-status="temp" aria-pressed="false" onclick="setStatusFilter('temp')"><i class="status-dot temp"></i>临时离场</button>
+    <span class="status-help">与搜索、房间和分配人筛选联动</span>
+  </div>
   <div class="workspace-panel"><aside class="room-nav" aria-label="房间筛选"><div class="room-nav-head"><strong>空间导航</strong><small id="room_nav_total">0 个区域</small></div><div class="room-nav-body" id="room_nav"><button class="room-link active" type="button"><span>全部房间</span></button></div></aside>
   <div class="board"><div class="board-head"><div><h2 id="board_title">工位分布</h2><div class="result-note" id="result_note">正在加载工位...</div></div><div class="view-toggle" role="group" aria-label="显示方式"><button type="button" id="view_matrix" class="view-btn active" aria-pressed="true" onclick="setViewMode('matrix')">工位网格</button><button type="button" id="view_cards" class="view-btn" aria-pressed="false" onclick="setViewMode('cards')">人员卡片</button><button type="button" id="view_table" class="view-btn" aria-pressed="false" onclick="setViewMode('table')">数据列表</button><button type="button" id="view_assets" class="view-btn" aria-pressed="false" onclick="setViewMode('assets')">设备台账</button></div></div>
-  <div class="board-inner"><div class="board-meta"><strong id="board_subtitle">全部工位 · 自动布局</strong><span class="board-hint"><b>●</b> 悬停预览 · 点击右侧展开详情</span></div><div id="app"><div class="loading-placeholder">正在读取云端工位数据...</div></div></div>
+  <div class="board-inner"><div class="board-meta"><strong id="board_subtitle">真实工位编号 · 按房间排列</strong><span class="board-hint"><b>●</b> 悬停预览 · 点击右侧展开详情</span></div><div id="app"><div class="loading-placeholder">正在读取云端工位数据...</div></div></div>
   </div></div></section>
+  <details class="room-insights-details" id="room_insights_details">
+    <summary><span><strong>房间使用率分析</strong><small>按房间查看工位占用比例</small></span><span class="summary-action">展开查看 <span aria-hidden="true">⌄</span></span></summary>
+   <div class="room-insights" id="room_insights" aria-label="房间工位占用率"><div class="room-insights-heading"><strong>空间使用概况</strong><span>按房间统计 · 占用含临时离场</span></div><div id="room_insight_grid" class="room-insight-grid"><span class="insight-placeholder">正在载入房间使用情况...</span></div></div>
+  </details>
  </div>
 </main>
 </div>
@@ -109,9 +141,18 @@ body.drawer-open{overflow:hidden}.modal{z-index:120;display:none;align-items:str
 <div id="toast" class="toast" role="status" aria-live="polite">保存成功</div>
 <div id="modal" class="modal" role="dialog" aria-modal="true" aria-label="工位详情和编辑" aria-hidden="true" onclick="if(event.target===this)closeModal()">
     <div class="modal-box" id="drawer_panel" tabindex="-1">
+        <div class="drawer-fixed-head">
         <div class="drawer-kicker"><span class="drawer-kicker-dot"></span> WORKSTATION DETAILS <button class="drawer-close" type="button" aria-label="关闭工位详情" onclick="closeModal()">×</button></div>
         <div class="drawer-identity"><div class="drawer-icon" aria-hidden="true">▦</div><div class="drawer-identity-copy"><span id="drawer_office">工位详情</span><h2 id="drawer_id">—</h2></div><span class="drawer-pill" id="drawer_status">待分配</span></div>
         <p class="drawer-subtitle" id="drawer_subtitle">查看并维护工位、人员及设备信息</p>
+        <div class="drawer-tabs" role="tablist" aria-label="工位详情分类">
+          <button type="button" id="drawer_tab_people" class="drawer-tab active" role="tab" aria-selected="true" onclick="setDrawerTab('people')">人员资料</button>
+          <button type="button" id="drawer_tab_permissions" class="drawer-tab" role="tab" aria-selected="false" onclick="setDrawerTab('permissions')">权限与工牌</button>
+          <button type="button" id="drawer_tab_assets" class="drawer-tab" role="tab" aria-selected="false" onclick="setDrawerTab('assets')">硬件资产</button>
+        </div>
+        </div>
+        <div class="drawer-body">
+        <section class="drawer-tab-panel" id="drawer_panel_people" data-drawer-tab="people" role="tabpanel" aria-labelledby="drawer_tab_people">
         <div class="modal-header">
             <h3 id="m_title"></h3>
             <div class="temp-status-card">
@@ -142,14 +183,16 @@ body.drawer-open{overflow:hidden}.modal{z-index:120;display:none;align-items:str
         <label class="field-label" for="i_co">公司名称 <span style="color:var(--danger-red)">*</span></label>
         <input type="text" list="co_list" id="i_co" placeholder="请输入公司名称（必填）" required>
         <datalist id="co_list"></datalist>
-
+        </section>
+        <section class="drawer-tab-panel" id="drawer_panel_permissions" data-drawer-tab="permissions" role="tabpanel" aria-labelledby="drawer_tab_permissions" hidden>
         <div class="sec-title">权限与工牌</div>
         <div class="todo-row"><span>🔑 门禁权限</span><input type="text" id="i_door" placeholder="输入卡号" style="width: 120px; margin:0; padding: 8px;"></div>
         <div class="todo-row"><span>💳 实体工牌</span><input type="text" id="i_badge" placeholder="工牌号" style="width: 120px; margin:0; padding: 8px;"></div>
         <div class="todo-row"><span>💬 钉钉群</span><label class="switch"><input type="checkbox" id="c_ding"><span class="slider"></span></label></div>
         <div class="todo-row"><span>💬 RTX通讯</span><label class="switch"><input type="checkbox" id="c_rtx"><span class="slider"></span></label></div>
         <div class="todo-row"><span>🔒 保密协议</span><label class="switch"><input type="checkbox" id="c_nda"><span class="slider"></span></label></div>
-
+        </section>
+        <section class="drawer-tab-panel" id="drawer_panel_assets" data-drawer-tab="assets" role="tabpanel" aria-labelledby="drawer_tab_assets" hidden>
         <div class="sec-title">硬件资产登记</div>
         <div class="asset-grid">
             <div class="asset-item"><span class="asset-label">⌨️ 键鼠套件</span><input id="a_kb"></div>
@@ -164,7 +207,8 @@ body.drawer-open{overflow:hidden}.modal{z-index:120;display:none;align-items:str
 
         <div class="sec-title">备注</div>
         <input type="text" id="i_remark" placeholder="备注..." style="margin-top:0;">
-
+        </section>
+        </div>
         <div class="modal-footer">
             <button class="btn btn-red" onclick="doLeave()" style="flex: 0 0 auto; width: auto; padding-left: 15px; padding-right: 15px;">办理离场</button>
             <button class="btn btn-gray" onclick="closeModal()">取消</button>
@@ -188,6 +232,7 @@ let editIdx = -1;
 let selectedRoom = '';
 let roomOptions = [];
 let viewMode = 'matrix'; // 只切换展示方式，不影响工位数据、筛选和导出
+let statusFilter = 'all'; // 全部 / 使用中 / 空闲 / 临时离场
 
 async function init() {
     if(globalData.length === 0) {
@@ -245,6 +290,21 @@ function clearFilters() {
     document.getElementById('global_search').value = '';
     document.getElementById('allocator_filter').value = '';
     selectedRoom = '';
+    statusFilter = 'all';
+    updateStatusFilterButtons();
+    render();
+}
+
+function updateStatusFilterButtons() {
+    document.querySelectorAll('.status-filter-btn').forEach(btn => {
+        const active = btn.dataset.status === statusFilter;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', String(active));
+    });
+}
+function setStatusFilter(value) {
+    statusFilter = ['all','occ','free','temp'].includes(value) ? value : 'all';
+    updateStatusFilterButtons();
     render();
 }
 
@@ -254,7 +314,8 @@ function getFilteredData() {
     return globalData.filter(d => {
         const allocation = parseAllocationName(d.name);
         const searchable = [d.id, d.name, d.company, d.office].join(' ').toLocaleLowerCase();
-        return (!keyword || searchable.includes(keyword)) && (!allocator || allocation.allocator === allocator) && (!selectedRoom || d.office === selectedRoom);
+        const status = !isOccupied(d) ? 'free' : d.isTemp ? 'temp' : 'occ';
+        return (!keyword || searchable.includes(keyword)) && (!allocator || allocation.allocator === allocator) && (!selectedRoom || d.office === selectedRoom) && (statusFilter === 'all' || status === statusFilter);
     });
 }
 
@@ -277,7 +338,7 @@ function setViewMode(nextMode) {
         if(button){button.classList.toggle('active', viewMode === mode);button.setAttribute('aria-pressed', String(viewMode === mode));}
     });
     const titles = {matrix:'工位分布',cards:'工位卡片',table:'人员台账',assets:'设备资产台账'};
-    const subtitles = {matrix:'全部工位 · 按编号自动布局',cards:'查看各工位人员详情',table:'完整人员信息一览',assets:'查看工位已登记设备'};
+    const subtitles = {matrix:'真实工位编号 · 按房间排列',cards:'查看各工位人员详情',table:'完整人员信息一览',assets:'查看工位已登记设备'};
     document.getElementById('board_title').textContent = titles[viewMode];
     document.getElementById('board_subtitle').textContent = subtitles[viewMode];
     updateNav(viewMode);
@@ -355,29 +416,32 @@ function renderSeatCard(d) {
 }
 
 function renderSeatMatrix(group) {
-    // 按编号自动分组，每 12 个为一个视觉区段；并非真实办公室座位位置。
-    const chunkSize = 12;
-    const chunks = [];
-    for(let start=0; start<group.length; start+=chunkSize) {
-        const slice = group.slice(start,start+chunkSize);
-        const tiles = slice.map(d => {
-            const idx = globalData.indexOf(d);
-            const i = getSeatInfo(d);
-            const selectedClass = editIdx === idx && document.getElementById('modal').style.display === 'flex' ? ' is-selected' : '';
-            return `<div class="matrix-seat ${i.kind}${selectedClass}" data-seat-index="${idx}" onclick="openEdit(${idx})" role="button" tabindex="0"
-              onmouseenter="showSeatPreview(event,${idx})" onmouseleave="hideSeatPreview()"
-              onfocus="showSeatPreview(event,${idx})" onblur="hideSeatPreview()"
-              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEdit(${idx})}"
-              aria-label="${escapeHtml(d.id)}，${escapeHtml(i.person)}，${i.status}，点击查看详情">
-              <div class="matrix-top"><div class="desk-figure" aria-hidden="true"></div><i class="matrix-led" aria-hidden="true"></i></div>
-              <div class="matrix-code">${escapeHtml(d.id)}</div>
-              <div class="matrix-bottom"><div class="matrix-foot"><strong class="matrix-name">${escapeHtml(i.person)}</strong><span class="matrix-small">${i.occupied ? escapeHtml(i.allocation.allocator || d.company || '已占用') : (i.assetsCount ? `保留 ${i.assetsCount} 类设备` : '可安排人员')}</span></div><span class="matrix-status">${i.status}</span></div>
-            </div>`;
-        }).join('');
-        const block = Math.floor(start/chunkSize)+1;
-        chunks.push(`<div class="matrix-zone"><div class="matrix-zone-top"><div><span class="zone-eyebrow">SEAT GROUP ${String(block).padStart(2,'0')}</span><strong>编号序列 · ${String(block).padStart(2,'0')}组</strong></div><small>${slice.length} 个工位</small></div><div class="matrix-wrap">${tiles}</div></div>`);
-    }
-    return '<div class="matrix-layout">' + chunks.join('<div class="zone-separator" aria-hidden="true"><span>编号区段</span></div>') + '</div>';
+    // 仅按真实房间分区，按真实工位编号排序；不再人为划分“01、02”编号序列。
+    const tiles = group.map(d => {
+        const idx = globalData.indexOf(d);
+        const i = getSeatInfo(d);
+        const selectedClass = editIdx === idx && document.getElementById('modal').style.display === 'flex' ? ' is-selected' : '';
+        return `<div class="matrix-seat ${i.kind}${selectedClass}" data-seat-index="${idx}" onclick="openEdit(${idx})" role="button" tabindex="0"
+          onmouseenter="showSeatPreview(event,${idx})" onmouseleave="hideSeatPreview()"
+          onfocus="showSeatPreview(event,${idx})" onblur="hideSeatPreview()"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEdit(${idx})}"
+          aria-label="${escapeHtml(d.id)}，${escapeHtml(i.person)}，${i.status}，点击查看详情">
+          <div class="matrix-top"><div class="desk-figure" aria-hidden="true">
+            <svg viewBox="0 0 76 57" aria-hidden="true" focusable="false">
+              <rect class="desk-monitor" x="23" y="3" width="30" height="21" rx="4"/>
+              <path class="desk-screen" d="M27 7h22v13H27z"/>
+              <path class="desk-metal" d="M38 24v6m-9 0h18"/>
+              <rect class="desk-top" x="6" y="30" width="64" height="9" rx="4.5"/>
+              <path class="desk-leg" d="M15 39v13m46-13v13"/>
+              <path class="desk-chair" d="M31 43c0-3 2-5 5-5h4c3 0 5 2 5 5v6H31z"/>
+              <path class="desk-chair-line" d="M27 51h22m-11 0v4"/>
+            </svg>
+          </div><i class="matrix-led" aria-hidden="true"></i></div>
+          <div class="matrix-code">${escapeHtml(d.id)}</div>
+          <div class="matrix-bottom"><div class="matrix-foot"><strong class="matrix-name">${escapeHtml(i.person)}</strong><span class="matrix-small">${i.occupied ? escapeHtml(i.allocation.allocator || d.company || '已占用') : (i.assetsCount ? `保留 ${i.assetsCount} 类设备` : '可安排人员')}</span></div><span class="matrix-status">${i.status}</span></div>
+        </div>`;
+    }).join('');
+    return `<div class="matrix-wrap matrix-wrap-flat">${tiles}</div>`;
 }
 
 function showSeatPreview(event,idx) {
@@ -554,7 +618,7 @@ function exportExcel() {
         return;
     }
     const stamp = new Date().toLocaleDateString('sv-SE');
-    const filtered = !!(document.getElementById('global_search').value.trim() || document.getElementById('allocator_filter').value);
+    const filtered = !!(document.getElementById('global_search').value.trim() || document.getElementById('allocator_filter').value || selectedRoom || statusFilter !== 'all');
     const filename = `工位管理台账_${stamp}${filtered ? '_筛选结果' : ''}`;
     try {
         if(typeof XLSX !== 'undefined') {
@@ -630,7 +694,7 @@ function openEdit(idx) {
     editIdx = idx;
     const d = globalData[idx];
     const btn = document.getElementById('btn_save');
-    btn.disabled = false; btn.innerHTML = "✨ 保存信息";
+    btn.disabled = false; btn.innerHTML = "保存信息";
 
     hideSeatPreview();
     window.lastDrawerFocus = document.activeElement;
@@ -674,6 +738,7 @@ function openEdit(idx) {
     document.getElementById('a_cin').value = d.assets.cin || '';
     document.getElementById('a_cout').value = d.assets.cout || '';
 
+    setDrawerTab('people');
     const modal = document.getElementById('modal');
     modal.style.display = 'flex';
     modal.setAttribute('aria-hidden','false');
@@ -682,6 +747,20 @@ function openEdit(idx) {
     document.querySelectorAll('[data-seat-index="'+idx+'"]').forEach(el=>el.classList.add('is-selected'));
     document.getElementById('drawer_panel').scrollTop = 0;
     document.querySelector('.drawer-close').focus({preventScroll:true});
+}
+
+function setDrawerTab(tab) {
+    const target = ['people','permissions','assets'].includes(tab) ? tab : 'people';
+    document.querySelectorAll('.drawer-tab').forEach(btn => {
+        const active = btn.id === 'drawer_tab_' + target;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-selected', String(active));
+    });
+    document.querySelectorAll('.drawer-tab-panel').forEach(panel => {
+        panel.hidden = panel.dataset.drawerTab !== target;
+    });
+    const drawer = document.getElementById('drawer_panel');
+    if(drawer && drawer.offsetParent !== null) drawer.scrollTop = 0;
 }
 
 function showToast(msg) {
@@ -700,6 +779,10 @@ async function save() {
     const nameVal = `${occupantVal}-${managerVal}-${allocatorVal}-${departureVal}`;
     const coVal = document.getElementById('i_co').value.trim();
     if(!occupantVal || !managerVal || !allocatorVal || !departureVal || !coVal) {
+        setDrawerTab('people');
+        const firstEmpty = ['i_occupant','i_manager','i_allocator','i_departure','i_co']
+          .map(id => document.getElementById(id)).find(el => !el.value.trim());
+        if(firstEmpty) firstEmpty.focus({preventScroll:false});
         alert("请填写完整的工位占用人、技术经理、分配人、离场时间和公司名称");
         return;
     }
@@ -749,7 +832,7 @@ async function save() {
     } catch(err) {
         alert("❌ 保存出错：" + err.message);
     } finally {
-        btn.disabled = false; btn.innerHTML = "✨ 保存信息";
+        btn.disabled = false; btn.innerHTML = "保存信息";
     }
 }
 
